@@ -1,0 +1,35 @@
+Package: MSstatsConvertLLM
+Type: Package
+Title: LLM-Driven Schema Inference and Conversion for MSstats
+Version: 0.1.0
+Authors@R:
+    person("Devon", "Kohler", email = "kohler.d@northeastern.edu",
+           role = c("aut", "cre"))
+Description: Uses locally-hosted large language models (LLMs) to automatically
+    map columns of arbitrary mass-spectrometry proteomics tool output onto the
+    standardized MSstats analysis schema. The inferred mapping (and any
+    discovered quality-control filters) is fed into the existing MSstatsConvert
+    pipeline via LLMtoMSstatsFormat(), reducing the manual overhead of onboarding
+    new input formats. Also provides a benchmarking harness for evaluating how
+    accurately different local models and prompt strategies recover the correct
+    schema mapping against curated ground truth.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: false
+Depends:
+    R (>= 4.0)
+Imports:
+    data.table,
+    ellmer,
+    jsonlite,
+    MSstatsConvert
+Suggests:
+    MSstats,
+    ggplot2,
+    stringr,
+    testthat (>= 3.0.0)
+biocViews: Proteomics, MassSpectrometry, Preprocessing, Software
+RoxygenNote: 8.0.0
+Roxygen: list(markdown = TRUE)
+URL: https://github.com/devonjkohler/MSstatsConvertLLM
+BugReports: https://github.com/devonjkohler/MSstatsConvertLLM/issues

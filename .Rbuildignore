@@ -1,0 +1,17 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.git$
+^\.gitignore$
+^\.DS_Store$
+^.*/\.DS_Store$
+^data$
+^results$
+^run_one\.R$
+^run_all\.R$
+^analysis\.R$
+^compare_downstream\.R$
+^compare_navarro\.R$
+^old\.R$
+^ASMS2026_abstract\.docx$
+^\.github$
+^scratchpad$
