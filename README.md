@@ -26,7 +26,7 @@ This work was presented as a poster at **ASMS 2026**.
 
 ```r
 # install.packages("remotes")
-remotes::install_github("devonjkohler/MSstatsConvertLLM")
+remotes::install_github("Vitek-Lab/MSstatsConvertLLM")
 ```
 
 Or, from a local clone:
