@@ -62,10 +62,10 @@ MSSTATS_FIELDS <- c(
 GROUND_TRUTH <- list(
   spectronaut = list(
     ProteinName     = c("PG.ProteinGroups", "PG.ProteinAccessions"),
-    PeptideSequence = c("EG.ModifiedSequence", "PEP.StrippedSequence"),
+    PeptideSequence = "EG.ModifiedSequence",
     PrecursorCharge = "FG.Charge",
     FragmentIon     = "F.FrgIon",
-    ProductCharge   = "F.Charge",
+    ProductCharge   = c("F.Charge", "F.FrgZ"),
     Run             = "R.FileName",
     Intensity       = c("F.PeakArea", "F.NormalizedPeakArea", 
                         "F.PeakHeight", "F.NormalizedPeakHeight"),
@@ -78,13 +78,13 @@ GROUND_TRUTH <- list(
     FragmentIon     = NULL,
     ProductCharge   = NULL,
     Run             = "Spectrum.File",
-    Intensity       = "Intensity",
+    Intensity       = c("Precursor.Area", "Intensity", "Area"),
     Qvalue          = NULL
   ),
   metamorpheus = list(
     ProteinName     = "Protein Group",
-    PeptideSequence = c("Full Sequence", "Base Sequence"),
-    PrecursorCharge = c("Precursor Charge", "Peak Charge"),
+    PeptideSequence = "Full Sequence",
+    PrecursorCharge = "Precursor Charge",
     FragmentIon     = NULL,
     ProductCharge   = NULL,
     Run             = "File Name",
