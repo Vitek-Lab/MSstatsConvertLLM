@@ -27,6 +27,7 @@ create_chat <- function(model_key) {
   if (spec$provider == "ollama") {
     ellmer::chat_ollama(
       model = spec$model,
+      base_url = OLLAMA_URL,
       params = ellmer::params(
         format      = "json",
         temperature = 0,

@@ -33,6 +33,15 @@ MODEL_REGISTRY <- list(
   )
 )
 
+#' Base URL for the Ollama server
+#'
+#' Defaults to a local Ollama instance. Set the `MSSTATS_OLLAMA_URL`
+#' environment variable to point at a remote server, for example an SSH
+#' tunnel to a GPU node.
+#'
+#' @export
+OLLAMA_URL <- Sys.getenv("MSSTATS_OLLAMA_URL", "http://localhost:11434")
+
 # ------------------------------------------------------------------
 # 2. MSstats target schema
 # ------------------------------------------------------------------
