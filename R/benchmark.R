@@ -172,7 +172,9 @@ validate_mapping <- function(mapping_result) {
   # --- Check 1: No duplicate column assignments ---
   assigned <- vapply(mappings, function(m) {
     val <- m[["from"]]
-    if (is.null(val) || is.na(val)) NA_character_ else val
+    if (is.null(val) || is.na(val)) return(NA_character_)
+    if (val == "" || tolower(val) == "null") return(NA_character_)
+    val
   }, character(1))
   
   names(assigned) <- vapply(mappings, function(m) m[["field"]], character(1))
