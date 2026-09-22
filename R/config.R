@@ -69,7 +69,7 @@ GROUND_TRUTH <- list(
     Run             = "R.FileName",
     Intensity       = c("F.PeakArea", "F.NormalizedPeakArea", 
                         "F.PeakHeight", "F.NormalizedPeakHeight"),
-    Qvalue          = "EG.Qvalue"
+    Qvalue          = c("EG.Qvalue", "PG.Qvalue")
   ),
   proteome_discoverer = list(
     ProteinName     = "Protein.Group.Accessions",
