@@ -40,10 +40,7 @@ create_chat <- function(model_key) {
   } else if (spec$provider == "anthropic") {
     ellmer::chat_anthropic(
       model = spec$model,
-      params = ellmer::params(
-        temperature = 0,
-        max_tokens  = 4096
-      )
+      params = ellmer::params(max_tokens  = 4096)
     )
   } else {
     stop("Unknown provider: ", spec$provider)

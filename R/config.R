@@ -30,6 +30,11 @@ MODEL_REGISTRY <- list(
     provider = "ollama",
     model    = "deepseek-r1:14b",
     label    = "DeepSeek-R1 14B"
+  ),
+  "claude-sonnet" = list(
+    provider = "anthropic",
+    model    = "claude-sonnet-5",
+    label    = "Claude Sonnet 5"
   )
 )
 
