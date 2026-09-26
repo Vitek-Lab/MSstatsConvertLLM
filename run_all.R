@@ -155,8 +155,20 @@ print(summary_dt)
 
 fwrite(summary_dt, file.path(outdir, paste0("summary_", timestamp, ".csv")))
 
+# Save raw LLM outputs first. Filter parsing below depends on the model
+# returning well-formed objects, which it does not always do; if that throws,
+# the raw trials are already on disk.
+saveRDS(all_results, file.path(outdir, paste0("raw_trials_", timestamp, ".rds")))
+
 # Extract filter results from trials that used filter-aware prompts
 filter_rows <- list()
+
+# Models omit keys. Missing becomes NA rather than an error that ends the run.
+fget <- function(f, key) {
+  v <- tryCatch(f[[key]], error = function(e) NULL)
+  if (is.null(v) || length(v) == 0) NA_character_ else as.character(v)[1]
+}
+
 for (trial in all_results) {
   if (!is.null(trial$mapping$filters)) {
     fl <- trial$mapping$filters
@@ -172,10 +184,10 @@ for (trial in all_results) {
         filter_rows[[length(filter_rows) + 1]] <- data.table(
           model = trial$model, tool = trial$tool, prompt = trial$prompt,
           rep = trial_rep,
-          column = f[["column"]], dtype = f[["dtype"]],
-          operation = f[["operation"]], value = as.character(f[["value"]]),
-          description = f[["description"]],
-          confidence = as.numeric(f[["confidence"]])
+          column = fget(f, "column"), dtype = fget(f, "dtype"),
+          operation = fget(f, "operation"), value = fget(f, "value"),
+          description = fget(f, "description"),
+          confidence = suppressWarnings(as.numeric(fget(f, "confidence")))
         )
       }
     }
@@ -186,9 +198,6 @@ if (length(filter_rows) > 0) {
   fwrite(filters_dt, file.path(outdir, paste0("filters_", timestamp, ".csv")))
   cat("  filters_",     timestamp, ".csv  (LLM-suggested filters)\n")
 }
-
-# Save raw LLM outputs for auditing
-saveRDS(all_results, file.path(outdir, paste0("raw_trials_", timestamp, ".rds")))
 
 cat("\nResults saved to: ", outdir, "/\n")
 cat("  field_scores_", timestamp, ".csv  (per-field detail)\n")
