@@ -82,6 +82,18 @@ for (model_key in selected_models) {
 
   for (tool_name in selected_tools) {
     for (prompt_key in selected_prompts) {
+
+      # The first call after the prompt prefix changes does a full prefill;
+      # later identical calls reuse the cached prefix. The two paths are not
+      # bit-identical, which is enough to flip a near-tie between two candidate
+      # columns. Without this, rep 1 of every block is not comparable to the
+      # rest. Discarded.
+      tryCatch(
+        run_trial(model_key, tool_name, prompt_key,
+                  acquisition = TOOL_ACQUISITION[[tool_name]],
+                  allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool_name]])),
+        error = function(e) NULL)
+
       for (rep in seq_len(n_reps)) {
         idx <- idx + 1
         cat(sprintf("[%d] %s | %s | %s | rep %d ... ",
