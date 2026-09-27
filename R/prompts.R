@@ -502,6 +502,70 @@ Return ONLY valid JSON:
 # Available prompt versions for benchmarking
 # ------------------------------------------------------------------
 
+# v3 = v2 with one further change: the charge heuristics now state what the
+# column prefix means.
+#
+# Why: on Spectronaut the models map ProductCharge to FG.Charge, which is the
+# precursor charge column. "Do NOT reuse PrecursorCharge" was not enough,
+# because the two names differ by one character and nothing told the model
+# which level each prefix denotes.
+#
+# This is format-specific guidance. Fine for a paper claiming support for
+# named formats, and it should be disclosed as tuning against a reported
+# format. It would not be fine if the paper claimed generalisation to formats
+# the prompts had not seen.
+#
+# Paste everything below into R/prompts.R before the registry section, then
+# replace PROMPT_VERSIONS with the list at the bottom.
+
+# Literal find-and-replace. No regex, so nothing in the search or replacement
+# text is interpreted. Errors loudly rather than returning the input unchanged.
+.prompt_swap <- function(txt, old, new) {
+  i <- regexpr(old, txt, fixed = TRUE)
+  if (i == -1L) stop("prompt text not found:\n", old, call. = FALSE)
+  paste0(substr(txt, 1L, i - 1L),
+         new,
+         substr(txt, i + attr(i, "match.length"), nchar(txt)))
+}
+
+.PRECURSOR_OLD <- "- PrecursorCharge: match /(Precursor.*Charge|FG\\.Charge|\\bCharge\\b)/i"
+
+.PRECURSOR_NEW <- paste0(
+  .PRECURSOR_OLD, "\n",
+  "  Column prefixes indicate the level a column describes. A \"FG.\" prefix\n",
+  "  is the precursor (fragment group); a \"F.\" prefix is the fragment\n",
+  "  (product). FG.Charge is PrecursorCharge, never ProductCharge."
+)
+
+.PRODUCT_OLD <- "  Do NOT reuse PrecursorCharge column. If no separate match, set null."
+
+.PRODUCT_NEW <- paste0(
+  "  F.Charge is ProductCharge. Do NOT reuse the PrecursorCharge column, and\n",
+  "  do NOT map any FG.* column here. If there is no fragment-level charge\n",
+  "  column, set null."
+)
+
+# ------------------------------------------------------------------
+# CONSTRAINED v3
+# ------------------------------------------------------------------
+PROMPT_CONSTRAINED_V3 <- .prompt_swap(
+  .prompt_swap(PROMPT_CONSTRAINED_V2, .PRECURSOR_OLD, .PRECURSOR_NEW),
+  .PRODUCT_OLD, .PRODUCT_NEW
+)
+
+# ------------------------------------------------------------------
+# CONSTRAINED + FILTER v3
+# ------------------------------------------------------------------
+PROMPT_CONSTRAINED_FILTER_V3 <- .prompt_swap(
+  .prompt_swap(PROMPT_CONSTRAINED_FILTER_V2, .PRECURSOR_OLD, .PRECURSOR_NEW),
+  .PRODUCT_OLD, .PRODUCT_NEW
+)
+
+stopifnot(
+  !identical(PROMPT_CONSTRAINED_V3, PROMPT_CONSTRAINED_V2),
+  !identical(PROMPT_CONSTRAINED_FILTER_V3, PROMPT_CONSTRAINED_FILTER_V2)
+)
+
 #' Registry of available prompt strategies
 #'
 #' A named list of system-prompt strings keyed by strategy
@@ -515,5 +579,7 @@ PROMPT_VERSIONS <- list(
   filter_aware           = PROMPT_FILTER_AWARE,
   constrained_filter     = PROMPT_CONSTRAINED_FILTER,
   constrained_v2         = PROMPT_CONSTRAINED_V2,
-  constrained_filter_v2  = PROMPT_CONSTRAINED_FILTER_V2
+  constrained_filter_v2  = PROMPT_CONSTRAINED_FILTER_V2,
+  constrained_v3         = PROMPT_CONSTRAINED_V3,
+  constrained_filter_v3  = PROMPT_CONSTRAINED_FILTER_V3
 )

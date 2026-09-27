@@ -1,0 +1,13 @@
+column,dtype,operation,value,description,confidence,model,tool,prompt,rep
+Decoy.Peptide,boolean,equals,FALSE,Filter out decoy peptides to ensure only genuine identifications are considered.,0.9,deepseek-r1-14b,metamorpheus,filter_aware,1
+Random.RT,boolean,equals,FALSE,Filter out peptides with random retention time matches to avoid false positives.,0.9,deepseek-r1-14b,metamorpheus,filter_aware,1
+Decoy.Peptide,boolean,equals,FALSE,Filter out decoy peptides to ensure only genuine identifications are considered.,0.9,deepseek-r1-14b,metamorpheus,filter_aware,2
+Random.RT,boolean,equals,FALSE,Filter out peptides with random retention time matches to avoid false positives.,0.9,deepseek-r1-14b,metamorpheus,filter_aware,2
+Decoy.Peptide,boolean,equals,FALSE,Filter out decoy peptides to ensure only genuine identifications are considered.,0.9,deepseek-r1-14b,metamorpheus,filter_aware,3
+Random.RT,boolean,equals,FALSE,Filter out peptides with random retention time matches to avoid false positives.,0.9,deepseek-r1-14b,metamorpheus,filter_aware,3
+Decoy.Peptide,boolean,equals,FALSE,Filter out decoy peptides to ensure only true positives are considered.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,1
+Random.RT,boolean,equals,FALSE,Filter out features with random retention times to avoid noise.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,1
+Decoy.Peptide,boolean,equals,FALSE,Filter out decoy peptides to ensure only true positives are considered.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,2
+Random.RT,boolean,equals,FALSE,Filter out features with random retention times to avoid noise.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,2
+Decoy.Peptide,boolean,equals,FALSE,Filter out decoy peptides to ensure only true positives are considered.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,3
+Random.RT,boolean,equals,FALSE,Filter out features with random retention times to avoid noise.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,3
