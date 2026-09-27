@@ -1,0 +1,11 @@
+column,dtype,operation,value,description,confidence,model,tool,prompt,rep
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,3
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,4
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,5
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,6
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,7
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,8
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,9
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,10

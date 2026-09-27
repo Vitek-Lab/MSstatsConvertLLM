@@ -1,0 +1,13 @@
+model,tool,prompt,exact_accuracy,acceptable_accuracy,candidate_rate,mean_conf,mean_time_sec,n_trials
+llama3.2-3b,spectronaut,constrained_v2,0.5,0.875,0,0.98,8.28666666666667,3
+llama3.2-3b,spectronaut,constrained_v3,0.5,0.875,0,0.9425,5.31666666666667,3
+llama3.2-3b,spectronaut,constrained_filter_v2,0.375,0.75,0.125,0.95,5.97,3
+llama3.2-3b,spectronaut,constrained_filter_v3,0.5,0.875,0.125,0.98,6.03333333333333,3
+llama3.1-8b,spectronaut,constrained_v2,0.625,0.875,0,0.9725,5.29333333333333,3
+llama3.1-8b,spectronaut,constrained_v3,0.75,1,0,0.9725,5.16666666666667,3
+llama3.1-8b,spectronaut,constrained_filter_v2,0.5,0.875,0,0.965,6.55,3
+llama3.1-8b,spectronaut,constrained_filter_v3,0.625,1,0,0.965,6.67,3
+deepseek-r1-14b,spectronaut,constrained_v2,0.625,1,0,0.98,17.9633333333333,3
+deepseek-r1-14b,spectronaut,constrained_v3,0.625,0.875,0,0.8575,15.88,3
+deepseek-r1-14b,spectronaut,constrained_filter_v2,0.5,0.875,0,0.8375,45.5133333333333,3
+deepseek-r1-14b,spectronaut,constrained_filter_v3,0.625,1,0,0.98,22.91,3
