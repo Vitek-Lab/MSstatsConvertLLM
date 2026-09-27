@@ -1,0 +1,61 @@
+column,dtype,operation,value,description,confidence,model,tool,prompt,rep
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude features flagged as excluded from quantification,1,llama3.2-3b,spectronaut,filter_aware,1
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,1,llama3.2-3b,spectronaut,filter_aware,1
+F.FrgIon,string,contains,y,Filter by fragment ion type,0.8,llama3.2-3b,spectronaut,filter_aware,1
+F.FrgMz,string,contains,674,Filter by fragment mass,0.8,llama3.2-3b,spectronaut,filter_aware,1
+F.FrgNum,string,contains,6,Filter by fragment number,0.8,llama3.2-3b,spectronaut,filter_aware,1
+F.NormalizedPeakArea,string,greater_than,1306,Filter by normalized peak area,0.8,llama3.2-3b,spectronaut,filter_aware,1
+F.NormalizedPeakHeight,string,greater_than,6896,Filter by normalized peak height,0.8,llama3.2-3b,spectronaut,filter_aware,1
+F.PeakArea,string,greater_than,1394,Filter by peak area,0.8,llama3.2-3b,spectronaut,filter_aware,1
+F.PeakHeight,string,greater_than,7359,Filter by peak height,0.8,llama3.2-3b,spectronaut,filter_aware,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude features flagged as excluded from quantification,1,llama3.2-3b,spectronaut,filter_aware,2
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,1,llama3.2-3b,spectronaut,filter_aware,2
+F.FrgIon,string,contains,y,Filter by fragment ion type,0.8,llama3.2-3b,spectronaut,filter_aware,2
+F.FrgMz,string,contains,674,Filter by fragment mass,0.8,llama3.2-3b,spectronaut,filter_aware,2
+F.FrgNum,string,contains,6,Filter by fragment number,0.8,llama3.2-3b,spectronaut,filter_aware,2
+F.NormalizedPeakArea,string,greater_than,1306,Filter by normalized peak area,0.8,llama3.2-3b,spectronaut,filter_aware,2
+F.NormalizedPeakHeight,string,greater_than,6896,Filter by normalized peak height,0.8,llama3.2-3b,spectronaut,filter_aware,2
+F.PeakArea,string,greater_than,1394,Filter by peak area,0.8,llama3.2-3b,spectronaut,filter_aware,2
+F.PeakHeight,string,greater_than,7359,Filter by peak height,0.8,llama3.2-3b,spectronaut,filter_aware,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude features flagged as excluded from quantification,1,llama3.2-3b,spectronaut,filter_aware,3
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,1,llama3.2-3b,spectronaut,filter_aware,3
+F.FrgIon,string,contains,y,Filter by fragment ion type,0.8,llama3.2-3b,spectronaut,filter_aware,3
+F.FrgMz,string,contains,674,Filter by fragment mass,0.8,llama3.2-3b,spectronaut,filter_aware,3
+F.FrgNum,string,contains,6,Filter by fragment number,0.8,llama3.2-3b,spectronaut,filter_aware,3
+F.NormalizedPeakArea,string,greater_than,1306,Filter by normalized peak area,0.8,llama3.2-3b,spectronaut,filter_aware,3
+F.NormalizedPeakHeight,string,greater_than,6896,Filter by normalized peak height,0.8,llama3.2-3b,spectronaut,filter_aware,3
+F.PeakArea,string,greater_than,1394,Filter by peak area,0.8,llama3.2-3b,spectronaut,filter_aware,3
+F.PeakHeight,string,greater_than,7359,Filter by peak height,0.8,llama3.2-3b,spectronaut,filter_aware,3
+F.ExcludedFromQuantification,boolean,equals,FALSE,Excluded features should not be filtered out,1,llama3.2-3b,spectronaut,constrained_filter,1
+F.FrgLossType,string,equals,noloss,Only noloss fragments should be considered,1,llama3.2-3b,spectronaut,constrained_filter,1
+EG.Qvalue,numeric,less_than,log10(1e-6),Only peptides with Qvalue < log10(1e-6) should be considered,0.8,llama3.2-3b,spectronaut,constrained_filter,1
+EG.Library,string,contains,ecoli,Only libraries containing 'ecoli' should be considered,0.8,llama3.2-3b,spectronaut,constrained_filter,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Excluded features should not be filtered out,1,llama3.2-3b,spectronaut,constrained_filter,2
+F.FrgLossType,string,equals,noloss,Only noloss fragments should be considered,1,llama3.2-3b,spectronaut,constrained_filter,2
+EG.Qvalue,numeric,less_than,log10(1e-6),Only peptides with Qvalue < log10(1e-6) should be considered,0.8,llama3.2-3b,spectronaut,constrained_filter,2
+EG.Library,string,contains,ecoli,Only libraries containing 'ecoli' should be considered,0.8,llama3.2-3b,spectronaut,constrained_filter,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,Excluded features should not be filtered out,1,llama3.2-3b,spectronaut,constrained_filter,3
+F.FrgLossType,string,equals,noloss,Only noloss fragments should be considered,1,llama3.2-3b,spectronaut,constrained_filter,3
+EG.Qvalue,numeric,less_than,log10(1e-6),Only peptides with Qvalue < log10(1e-6) should be considered,0.8,llama3.2-3b,spectronaut,constrained_filter,3
+EG.Library,string,contains,ecoli,Only libraries containing 'ecoli' should be considered,0.8,llama3.2-3b,spectronaut,constrained_filter,3
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude features flagged as excluded from quantification,0.9,llama3.1-8b,spectronaut,filter_aware,1
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.8,llama3.1-8b,spectronaut,filter_aware,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude features flagged as excluded from quantification,0.9,llama3.1-8b,spectronaut,filter_aware,2
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.8,llama3.1-8b,spectronaut,filter_aware,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude features flagged as excluded from quantification,0.9,llama3.1-8b,spectronaut,filter_aware,3
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.8,llama3.1-8b,spectronaut,filter_aware,3
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude features from quantification,0.9,llama3.1-8b,spectronaut,constrained_filter,1
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.8,llama3.1-8b,spectronaut,constrained_filter,1
+EG.Qvalue,numeric,less_than,E-07,Filter out low-confidence peptides,0.7,llama3.1-8b,spectronaut,constrained_filter,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude features from quantification,0.9,llama3.1-8b,spectronaut,constrained_filter,2
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.8,llama3.1-8b,spectronaut,constrained_filter,2
+EG.Qvalue,numeric,less_than,E-07,Filter out low-confidence peptides,0.7,llama3.1-8b,spectronaut,constrained_filter,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude features from quantification,0.9,llama3.1-8b,spectronaut,constrained_filter,3
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.8,llama3.1-8b,spectronaut,constrained_filter,3
+EG.Qvalue,numeric,less_than,E-07,Filter out low-confidence peptides,0.7,llama3.1-8b,spectronaut,constrained_filter,3
+F.ExcludedFromQuantification,boolean,equals,FALSE,Excludes features flagged as excluded from quantification.,0.9,deepseek-r1-14b,spectronaut,filter_aware,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Excludes features flagged as excluded from quantification.,0.9,deepseek-r1-14b,spectronaut,filter_aware,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,Excludes features flagged as excluded from quantification.,0.9,deepseek-r1-14b,spectronaut,filter_aware,3
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filters out features excluded from quantification.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filters out features excluded from quantification.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filters out features excluded from quantification.,0.92,deepseek-r1-14b,spectronaut,constrained_filter,3
