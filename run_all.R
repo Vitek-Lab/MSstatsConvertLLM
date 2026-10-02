@@ -4,6 +4,7 @@
 # Usage:
 #   Rscript run_all.R                  # run everything
 #   Rscript run_all.R --models llama3.1-8b --tools spectronaut
+#   Rscript run_all.R --tools spectronaut,proteome_discoverer,metamorpheus,diann
 #
 # Install the package first (devtools::install(".")) or, during
 # development, replace library() with devtools::load_all(".").
@@ -24,8 +25,12 @@ parse_flag <- function(flag, default) {
   strsplit(val, ",")[[1]]
 }
 
+# Default scope is the three formats reported in the paper. diann is still
+# available via --tools but is not run by default.
+PAPER_TOOLS <- c("spectronaut", "proteome_discoverer", "metamorpheus")
+
 selected_models  <- parse_flag("--models",  names(MODEL_REGISTRY))
-selected_tools   <- parse_flag("--tools",   names(GROUND_TRUTH))
+selected_tools   <- parse_flag("--tools",   PAPER_TOOLS)
 selected_prompts <- parse_flag("--prompts", names(PROMPT_VERSIONS))
 n_reps           <- as.integer(parse_flag("--reps", "5"))
 
@@ -41,6 +46,21 @@ cat("Total trials:", length(selected_models) * length(selected_tools) *
 cat("========================================\n\n")
 
 # ------------------------------------------------------------------
+# Output paths, opened before the run
+#
+# Scores are appended after every trial rather than held in memory until the
+# end. A full matrix is hours long, and a dropped tunnel used to cost the
+# entire run.
+# ------------------------------------------------------------------
+outdir <- "results"
+dir.create(outdir, showWarnings = FALSE)
+
+timestamp   <- format(Sys.time(), "%Y%m%d_%H%M%S")
+scores_path <- file.path(outdir, paste0("field_scores_", timestamp, ".csv"))
+
+cat("Appending scores to:", scores_path, "\n\n")
+
+# ------------------------------------------------------------------
 # Run the matrix
 # ------------------------------------------------------------------
 all_results <- list()
@@ -48,8 +68,32 @@ all_scores  <- list()
 idx <- 0
 
 for (model_key in selected_models) {
+
+  # Warm-up: the model loads into VRAM on its first call, so without this the
+  # first cell of each model block runs cold and the rest run warm. Results are
+  # discarded.
+  cat(sprintf("[warmup] %s ... ", model_key))
+  warm <- tryCatch({
+    run_trial(model_key, selected_tools[1], selected_prompts[1],
+              acquisition = TOOL_ACQUISITION[[selected_tools[1]]],
+              allow_transforms = isTRUE(TOOL_TRANSFORMS[[selected_tools[1]]]))
+  }, error = function(e) NULL)
+  cat(if (is.null(warm)) "failed\n\n" else sprintf("%.1fs\n\n", warm$elapsed_sec))
+
   for (tool_name in selected_tools) {
     for (prompt_key in selected_prompts) {
+
+      # The first call after the prompt prefix changes does a full prefill;
+      # later identical calls reuse the cached prefix. The two paths are not
+      # bit-identical, which is enough to flip a near-tie between two candidate
+      # columns. Without this, rep 1 of every block is not comparable to the
+      # rest. Discarded.
+      tryCatch(
+        run_trial(model_key, tool_name, prompt_key,
+                  acquisition = TOOL_ACQUISITION[[tool_name]],
+                  allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool_name]])),
+        error = function(e) NULL)
+
       for (rep in seq_len(n_reps)) {
         idx <- idx + 1
         cat(sprintf("[%d] %s | %s | %s | rep %d ... ",
@@ -89,6 +133,9 @@ for (model_key in selected_models) {
                       elapsed_sec = trial$elapsed_sec)]
         
         print_scorecard(scores, trial)
+
+        # Crash-safe: on disk before the next trial starts.
+        fwrite(scores, scores_path, append = file.exists(scores_path))
         
         all_results[[idx]] <- c(trial, list(rep = rep))
         all_scores[[idx]]  <- scores
@@ -118,16 +165,22 @@ cat("SUMMARY\n")
 cat(strrep("=", 70), "\n")
 print(summary_dt)
 
-# Save outputs
-outdir <- "results"
-dir.create(outdir, showWarnings = FALSE)
-
-timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-fwrite(results_dt, file.path(outdir, paste0("field_scores_", timestamp, ".csv")))
 fwrite(summary_dt, file.path(outdir, paste0("summary_", timestamp, ".csv")))
+
+# Save raw LLM outputs first. Filter parsing below depends on the model
+# returning well-formed objects, which it does not always do; if that throws,
+# the raw trials are already on disk.
+saveRDS(all_results, file.path(outdir, paste0("raw_trials_", timestamp, ".rds")))
 
 # Extract filter results from trials that used filter-aware prompts
 filter_rows <- list()
+
+# Models omit keys. Missing becomes NA rather than an error that ends the run.
+fget <- function(f, key) {
+  v <- tryCatch(f[[key]], error = function(e) NULL)
+  if (is.null(v) || length(v) == 0) NA_character_ else as.character(v)[1]
+}
+
 for (trial in all_results) {
   if (!is.null(trial$mapping$filters)) {
     fl <- trial$mapping$filters
@@ -143,10 +196,10 @@ for (trial in all_results) {
         filter_rows[[length(filter_rows) + 1]] <- data.table(
           model = trial$model, tool = trial$tool, prompt = trial$prompt,
           rep = trial_rep,
-          column = f[["column"]], dtype = f[["dtype"]],
-          operation = f[["operation"]], value = as.character(f[["value"]]),
-          description = f[["description"]],
-          confidence = as.numeric(f[["confidence"]])
+          column = fget(f, "column"), dtype = fget(f, "dtype"),
+          operation = fget(f, "operation"), value = fget(f, "value"),
+          description = fget(f, "description"),
+          confidence = suppressWarnings(as.numeric(fget(f, "confidence")))
         )
       }
     }
@@ -157,9 +210,6 @@ if (length(filter_rows) > 0) {
   fwrite(filters_dt, file.path(outdir, paste0("filters_", timestamp, ".csv")))
   cat("  filters_",     timestamp, ".csv  (LLM-suggested filters)\n")
 }
-
-# Save raw LLM outputs for auditing
-saveRDS(all_results, file.path(outdir, paste0("raw_trials_", timestamp, ".rds")))
 
 cat("\nResults saved to: ", outdir, "/\n")
 cat("  field_scores_", timestamp, ".csv  (per-field detail)\n")

@@ -1,0 +1,70 @@
+column,dtype,operation,value,description,confidence,model,tool,prompt,rep
+F.ExcludedFromQuantification,boolean,equals,FALSE,Excludes fragment ions flagged as excluded from quantification by Spectronaut,0.95,claude-sonnet,spectronaut,filter_aware,1
+F.FrgLossType,string,equals,noloss,Retain only fragment ions without neutral loss for more reliable quantification,0.8,claude-sonnet,spectronaut,filter_aware,1
+PG.Qvalue,numeric,less_than,0.01,"Protein group level q-value filter to ensure confident protein identification, complementary to precursor-level EG.Qvalue mapped to MSstats Qvalue field",0.5,claude-sonnet,spectronaut,filter_aware,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude fragment ions flagged as excluded from quantification by Spectronaut,0.9,claude-sonnet,spectronaut,filter_aware,2
+F.FrgLossType,string,equals,noloss,Keep only fragment ions without neutral loss for more reliable quantification,0.75,claude-sonnet,spectronaut,filter_aware,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,"Removes fragment ions flagged by Spectronaut as excluded from quantification, ensuring only reliable signals are used.",0.9,claude-sonnet,spectronaut,filter_aware,3
+F.FrgLossType,string,equals,noloss,"Restricts fragments to those without neutral loss, which are generally more reliable for quantification and are the standard default in DIA workflows.",0.75,claude-sonnet,spectronaut,filter_aware,3
+PG.Qvalue,numeric,less_than,0.01,Protein-level q-value threshold to ensure only confidently identified protein groups are retained (complementary to EG.Qvalue at the fragment/precursor level).,0.5,claude-sonnet,spectronaut,filter_aware,3
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude fragment rows flagged as excluded from quantification,0.95,claude-sonnet,spectronaut,constrained_filter,1
+F.FrgLossType,string,equals,noloss,Keep only fragments with no neutral loss for reliable quantification,0.85,claude-sonnet,spectronaut,constrained_filter,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Remove features flagged as excluded from quantification,0.95,claude-sonnet,spectronaut,constrained_filter,2
+F.FrgLossType,string,equals,noloss,Keep only fragment ions with no neutral loss for reliable quantification,0.85,claude-sonnet,spectronaut,constrained_filter,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,Remove features flagged as excluded from quantification.,0.95,claude-sonnet,spectronaut,constrained_filter,3
+F.FrgLossType,string,equals,noloss,Keep only fragments without neutral loss for reliable quantification.,0.85,claude-sonnet,spectronaut,constrained_filter,3
+Confidence.Level,string,equals,High,"Keep only high-confidence PSM identifications, filtering out low-confidence matches",0.8,claude-sonnet,proteome_discoverer,filter_aware,1
+PSM.Ambiguity,string,equals,Unambiguous,"Retain only unambiguous peptide-spectrum matches, removing ambiguous assignments",0.75,claude-sonnet,proteome_discoverer,filter_aware,1
+Search.Engine.Rank,numeric,equals,1,Keep only top-ranked search engine hits per spectrum,0.6,claude-sonnet,proteome_discoverer,filter_aware,1
+Isolation.Interference,numeric,less_than,30,Filter out PSMs with high isolation interference which can compromise quantification accuracy,0.4,claude-sonnet,proteome_discoverer,filter_aware,1
+Decoy.Peptides.Matched,string,equals,"",Column appears empty/unused for decoy tracking in this dataset; low confidence but flagged as potential decoy filter,0.2,claude-sonnet,proteome_discoverer,filter_aware,1
+PSM.Ambiguity,string,equals,Unambiguous,Retain only unambiguous peptide-spectrum matches to avoid identification uncertainty,0.7,claude-sonnet,proteome_discoverer,filter_aware,2
+Confidence.Level,string,equals,High,"Filter to high-confidence identifications only, removing low-quality PSMs",0.75,claude-sonnet,proteome_discoverer,filter_aware,2
+Rank,numeric,equals,1,Keep only top-ranked PSM per spectrum to avoid duplicate/ambiguous matches,0.65,claude-sonnet,proteome_discoverer,filter_aware,2
+Search.Engine.Rank,numeric,equals,1,Keep only the best search engine ranked hit per spectrum,0.6,claude-sonnet,proteome_discoverer,filter_aware,2
+Decoy.Peptides.Matched,string,equals,"","Column appears empty/unused for decoy tracking; if populated, decoy hits should be excluded",0.3,claude-sonnet,proteome_discoverer,filter_aware,2
+X.Missed.Cleavages,numeric,less_than_or_equals,2,Optionally filter out peptides with excessive missed cleavages that may indicate poor digestion or false identification,0.3,claude-sonnet,proteome_discoverer,filter_aware,2
+PSM.Ambiguity,string,equals,Unambiguous,Keep only unambiguous PSMs to ensure confident peptide-spectrum matches,0.75,claude-sonnet,proteome_discoverer,filter_aware,3
+Confidence.Level,string,equals,High,"Filter to high-confidence identifications only, removing low-confidence PSMs",0.8,claude-sonnet,proteome_discoverer,filter_aware,3
+Decoy.Peptides.Matched,string,equals,"",Exclude PSMs that matched decoy peptides to remove false positives,0.55,claude-sonnet,proteome_discoverer,filter_aware,3
+Rank,numeric,equals,1,Keep only top-ranked PSM per spectrum to avoid duplicate/ambiguous matches,0.5,claude-sonnet,proteome_discoverer,filter_aware,3
+Search.Engine.Rank,numeric,equals,1,Keep only best search engine rank match per spectrum,0.45,claude-sonnet,proteome_discoverer,filter_aware,3
+PSM.Ambiguity,string,equals,Unambiguous,Keep only unambiguous peptide-spectrum matches to ensure confident identifications,0.75,claude-sonnet,proteome_discoverer,constrained_filter,1
+Exp.Value,numeric,less_than,0.05,Expectation value (similar to p-value) threshold for filtering low-confidence PSMs,0.6,claude-sonnet,proteome_discoverer,constrained_filter,1
+Confidence.Level,string,equals,High,Filter to retain only high-confidence identifications,0.7,claude-sonnet,proteome_discoverer,constrained_filter,1
+Decoy.Peptides.Matched,string,equals,"","Exclude decoy peptide matches used for FDR estimation, not part of true dataset",0.5,claude-sonnet,proteome_discoverer,constrained_filter,1
+Isolation.Interference,numeric,less_than,30,Filter out PSMs with high isolation interference indicating co-eluting contaminant precursors,0.4,claude-sonnet,proteome_discoverer,constrained_filter,1
+Exp.Value,numeric,less_than,0.01,Expectation value (similar to PEP/e-value) threshold to filter low-confidence PSMs,0.6,claude-sonnet,proteome_discoverer,constrained_filter,2
+Confidence.Level,string,equals,High,Retain only high-confidence PSM identifications,0.7,claude-sonnet,proteome_discoverer,constrained_filter,2
+PSM.Ambiguity,string,equals,Unambiguous,Filter out ambiguous peptide-spectrum matches to ensure unique identification,0.65,claude-sonnet,proteome_discoverer,constrained_filter,2
+Search.Engine.Rank,numeric,equals,1,Keep only top-ranked search engine matches (rank 1) per spectrum,0.6,claude-sonnet,proteome_discoverer,constrained_filter,2
+Decoy.Peptides.Matched,string,equals,"",Exclude PSMs matched to decoy peptides (empty indicates no decoy match),0.4,claude-sonnet,proteome_discoverer,constrained_filter,2
+Confidence.Level,string,equals,High,Keep only high-confidence PSMs to ensure reliable identifications,0.75,claude-sonnet,proteome_discoverer,constrained_filter,3
+PSM.Ambiguity,string,equals,Unambiguous,Exclude ambiguous PSM assignments to avoid mis-mapped peptides,0.7,claude-sonnet,proteome_discoverer,constrained_filter,3
+Search.Engine.Rank,numeric,equals,1,Keep only top-ranked PSM per spectrum from search engine,0.65,claude-sonnet,proteome_discoverer,constrained_filter,3
+Exp.Value,numeric,less_than,0.05,Expectation value threshold to filter low-confidence identifications (PEP-like score),0.55,claude-sonnet,proteome_discoverer,constrained_filter,3
+X.Missed.Cleavages,numeric,less_than_or_equals,2,Filter out peptides with excessive missed cleavages,0.4,claude-sonnet,proteome_discoverer,constrained_filter,3
+Decoy.Peptide,boolean,equals,FALSE,"Remove decoy peptide hits used for FDR estimation, not valid identifications",0.95,claude-sonnet,metamorpheus,filter_aware,1
+Random.RT,boolean,equals,FALSE,"Remove entries flagged as random/false RT matches, likely low-confidence or noise matches",0.75,claude-sonnet,metamorpheus,filter_aware,1
+Peak.Detection.Type,string,equals,MSMS,"Retain only peaks with direct MS/MS identification evidence rather than match-between-runs or other inferred detection, ensuring higher confidence quantification",0.5,claude-sonnet,metamorpheus,filter_aware,1
+PIP.PEP,numeric,less_than,0.01,"Posterior error probability threshold to filter low-confidence PSMs, complementary to q-value filtering",0.4,claude-sonnet,metamorpheus,filter_aware,1
+Decoy.Peptide,boolean,equals,FALSE,"Remove decoy peptide hits used for FDR estimation, not valid identifications for quantification",0.95,claude-sonnet,metamorpheus,filter_aware,2
+Random.RT,boolean,equals,FALSE,"Remove entries flagged as random/spurious retention time matches, likely false positives",0.8,claude-sonnet,metamorpheus,filter_aware,2
+Peak.Detection.Type,string,equals,MSMS,"Keep only peaks confirmed by MS/MS detection rather than inferred/matched-between-runs peaks, ensuring higher confidence quantification",0.5,claude-sonnet,metamorpheus,filter_aware,2
+PIP.PEP,numeric,less_than,,Posterior error probability threshold to filter low-confidence peptide identifications,0.5,claude-sonnet,metamorpheus,filter_aware,2
+Decoy.Peptide,boolean,equals,FALSE,"Remove decoy peptide hits used for FDR estimation, not real identifications.",0.95,claude-sonnet,metamorpheus,filter_aware,3
+Random.RT,boolean,equals,FALSE,"Exclude peaks flagged as random/spurious retention time matches, likely false positives.",0.75,claude-sonnet,metamorpheus,filter_aware,3
+PIP.PEP,numeric,less_than,0.05,Posterior error probability threshold to filter low-confidence peptide identifications.,0.5,claude-sonnet,metamorpheus,filter_aware,3
+Peak.Detection.Type,string,equals,MSMS,"Keep only peaks directly confirmed by MS2 identification rather than matched-between-runs or other detection types, ensuring higher confidence quantification.",0.4,claude-sonnet,metamorpheus,filter_aware,3
+Decoy.Peptide,boolean,equals,FALSE,Exclude decoy peptides (reverse sequences) from downstream quantification,0.95,claude-sonnet,metamorpheus,constrained_filter,1
+Random.RT,boolean,equals,FALSE,Exclude features flagged as random RT matches (likely false positives),0.75,claude-sonnet,metamorpheus,constrained_filter,1
+PIP.PEP,numeric,less_than,0.05,Filter on posterior error probability threshold to retain high-confidence identifications,0.6,claude-sonnet,metamorpheus,constrained_filter,1
+Peak.Detection.Type,string,equals,MSMS,Retain only features detected by MS/MS (not MBR/inferred) for higher confidence quantification,0.5,claude-sonnet,metamorpheus,constrained_filter,1
+Decoy.Peptide,boolean,equals,FALSE,Remove decoy peptide matches to retain only target identifications,0.95,claude-sonnet,metamorpheus,constrained_filter,2
+Random.RT,boolean,equals,FALSE,Exclude entries flagged as random/false RT matches used for FDR estimation,0.8,claude-sonnet,metamorpheus,constrained_filter,2
+PIP.PEP,numeric,less_than,0.01,Filter by posterior error probability to retain high-confidence identifications,0.6,claude-sonnet,metamorpheus,constrained_filter,2
+Peak.Detection.Type,string,equals,MSMS,"Retain only features detected directly via MS/MS rather than inferred/matched-between-runs, ensuring higher confidence quantification",0.5,claude-sonnet,metamorpheus,constrained_filter,2
+Decoy.Peptide,boolean,equals,FALSE,Exclude decoy peptides from downstream quantification/analysis,0.95,claude-sonnet,metamorpheus,constrained_filter,3
+Random.RT,boolean,equals,FALSE,Exclude features flagged as having random/invalid retention time matches,0.8,claude-sonnet,metamorpheus,constrained_filter,3
+PIP.PEP,numeric,less_than,0.01,Filter on posterior error probability (PEP) threshold to retain high-confidence identifications,0.6,claude-sonnet,metamorpheus,constrained_filter,3
+Peak.Detection.Type,string,equals,MSMS,Retain only features with direct MS/MS-based detection rather than inferred/matched-between-runs peaks,0.5,claude-sonnet,metamorpheus,constrained_filter,3

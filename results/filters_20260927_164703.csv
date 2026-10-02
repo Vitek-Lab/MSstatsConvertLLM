@@ -1,0 +1,15 @@
+column,dtype,operation,value,description,confidence,model,tool,prompt,rep
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude fragments flagged as excluded from quantification by Spectronaut,0.9,claude-sonnet,spectronaut,filter_aware,1
+F.FrgLossType,string,equals,noloss,Retain only fragments without neutral loss for more reliable quantification,0.75,claude-sonnet,spectronaut,filter_aware,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude fragments explicitly flagged as excluded from quantification by Spectronaut,0.9,claude-sonnet,spectronaut,filter_aware,2
+F.FrgLossType,string,equals,noloss,"Retain only fragments without neutral loss for more reliable quantification, a common DIA-Spectronaut filtering practice",0.75,claude-sonnet,spectronaut,filter_aware,2
+PG.Qvalue,numeric,less_than,0.01,"Protein-level q-value filter to ensure confident protein identification, complementing the peptide/precursor-level Qvalue already mapped",0.5,claude-sonnet,spectronaut,filter_aware,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,Remove fragments flagged as excluded from quantification by Spectronaut,0.95,claude-sonnet,spectronaut,filter_aware,3
+F.FrgLossType,string,equals,noloss,Keep only fragments without neutral loss for more reliable quantification,0.8,claude-sonnet,spectronaut,filter_aware,3
+F.ExcludedFromQuantification,boolean,equals,FALSE,Remove fragments flagged as excluded from quantification to retain only valid quantitative features.,0.95,claude-sonnet,spectronaut,constrained_filter,1
+F.FrgLossType,string,equals,noloss,Keep only fragment ions with no neutral loss for reliable quantification.,0.85,claude-sonnet,spectronaut,constrained_filter,1
+PG.Qvalue,numeric,less_than,0.01,Filter protein groups by q-value threshold to control false discovery rate at protein level.,0.6,claude-sonnet,spectronaut,constrained_filter,1
+F.ExcludedFromQuantification,boolean,equals,FALSE,Remove features flagged as excluded from quantification.,0.95,claude-sonnet,spectronaut,constrained_filter,2
+F.FrgLossType,string,equals,noloss,Keep only fragments with no neutral loss for reliable quantification.,0.85,claude-sonnet,spectronaut,constrained_filter,2
+F.ExcludedFromQuantification,boolean,equals,FALSE,Remove features flagged as excluded from quantification,0.95,claude-sonnet,spectronaut,constrained_filter,3
+F.FrgLossType,string,equals,noloss,Keep only fragments with no neutral loss for reliable quantification,0.85,claude-sonnet,spectronaut,constrained_filter,3

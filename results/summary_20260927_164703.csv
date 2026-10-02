@@ -1,0 +1,9 @@
+model,tool,prompt,exact_accuracy,acceptable_accuracy,candidate_rate,mean_conf,mean_time_sec,n_trials
+claude-sonnet,spectronaut,lean,0.875,1,0,0.875,7.99,3
+claude-sonnet,spectronaut,constrained,0.875,1,0,0.97,7.99666666666667,3
+claude-sonnet,spectronaut,filter_aware,0.875,1,0,0.889583333333333,12.37,3
+claude-sonnet,spectronaut,constrained_filter,0.75,1,0,0.9625,11.17,3
+claude-sonnet,spectronaut,constrained_v2,0.833333333333333,1,0,0.9725,8.08666666666667,3
+claude-sonnet,spectronaut,constrained_filter_v2,0.75,1,0,0.975,11.9633333333333,3
+claude-sonnet,spectronaut,constrained_v3,0.791666666666667,1,0,0.9725,7.34333333333333,3
+claude-sonnet,spectronaut,constrained_filter_v3,0.75,1,0,0.9725,11.15,3

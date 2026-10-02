@@ -726,6 +726,6 @@ cat(sprintf("Shared proteins compared: %d\n", uniqueN(merged$Protein)))
 cat(sprintf("log2FC correlation: %.4f\n", 
             cor(merged$log2FC_hand, merged$log2FC_llm, use = "complete.obs")))
 if (!is.null(fdr_results)) {
-  cat(sprintf("Empirical FDR — Hand: %.4 f, LLM: %.4f\n",
+  cat(sprintf("Empirical FDR — Hand: %.4f, LLM: %.4f\n",
               fdr_results$hand$empirical_fdr, fdr_results$llm$empirical_fdr))
 }
