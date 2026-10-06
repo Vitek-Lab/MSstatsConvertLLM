@@ -32,7 +32,7 @@ PAPER_TOOLS <- c("spectronaut", "proteome_discoverer", "metamorpheus")
 selected_models  <- parse_flag("--models",  names(MODEL_REGISTRY))
 selected_tools   <- parse_flag("--tools",   PAPER_TOOLS)
 selected_prompts <- parse_flag("--prompts", names(PROMPT_VERSIONS))
-n_reps           <- as.integer(parse_flag("--reps", "5"))
+n_reps           <- as.integer(parse_flag("--reps", "3"))
 
 cat("========================================\n")
 cat("LLM-MSstats Schema Inference Benchmark\n")
