@@ -1,22 +1,24 @@
 # ============================================================
 # LLMtoMSstatsFormat.R — Generic converter driven by LLM schema mapping
 #
-# Uses the LLM's mapping + filter output to transform arbitrary
-# proteomics tool output into MSstats format, leveraging the
-# existing MSstatsConvert pipeline for all downstream processing.
+# The LLM supplies the rename map and any discovered filters. Everything
+# after that is the same MSstatsConvert pipeline the hand-written
+# converters use.
 # ============================================================
 
 #' Convert arbitrary proteomics output to MSstats format using LLM mapping
 #'
 #' @param input data.table of raw tool output
-#' @param annotation data.table with Run, Condition, BioReplicate columns
+#' @param annotation data.table with Run, Condition, BioReplicate columns, or
+#'   NULL to extract them from `input`
 #' @param llm_mapping list — parsed LLM output with $mappings and optionally $filters
 #' @param useUniquePeptide logical, remove shared peptides (default TRUE)
 #' @param removeFewMeasurements logical (default TRUE)
 #' @param removeProtein_with1Peptide logical (default FALSE)
 #' @param summaryforMultipleRows function for summarizing multiple PSMs (default max)
-#' @param qvalue_cutoff numeric, keep only rows with Qvalue < cutoff (default 0.05).
-#'   Set to NULL to disable. Rows with NA Qvalue are retained.
+#' @param filter_with_Qvalue logical (default FALSE, as in the converters). TRUE
+#'   fills intensities above `qvalue_cutoff` with NA, treated as censored.
+#' @param qvalue_cutoff numeric (default 0.01, as in the converters)
 #' @param use_log_file logical (default TRUE)
 #' @param append logical (default FALSE)
 #' @param verbose logical (default TRUE)
@@ -26,13 +28,14 @@
 #' @export
 LLMtoMSstatsFormat <- function(
     input,
-    annotation,
+    annotation = NULL,
     llm_mapping,
     useUniquePeptide = TRUE,
     removeFewMeasurements = TRUE,
     removeProtein_with1Peptide = FALSE,
     summaryforMultipleRows = max,
-    qvalue_cutoff = 0.05,
+    filter_with_Qvalue = FALSE,
+    qvalue_cutoff = 0.01,
     use_log_file = TRUE,
     append = FALSE,
     verbose = TRUE,
@@ -43,7 +46,6 @@ LLMtoMSstatsFormat <- function(
   
   input <- data.table::copy(input)
   
-  # Track issues for auditing / poster
   diagnostics <- list(
     hallucinated_columns = data.table(
       field = character(0), 
@@ -59,7 +61,7 @@ LLMtoMSstatsFormat <- function(
       column = character(0), 
       operation = character(0), 
       value = character(0), 
-      rows_removed = integer(0)
+      kind = character(0)
     )
   )
   
@@ -80,25 +82,18 @@ LLMtoMSstatsFormat <- function(
   }
   
   # ---------------------------------------------------------------
-  # 2. Apply LLM-discovered filters BEFORE column renaming
-  #    (filter column names are in the original tool namespace)
+  # 2. Translate LLM filters into MSstatsPreprocess configs
+  #    Handed over with behavior = "fill", not applied here: a failing
+  #    row keeps its place with a blank intensity, so MSstats treats it
+  #    as censored rather than absent.
   # ---------------------------------------------------------------
-  n_before <- nrow(input)
-  filter_result <- .applyLLMFilters(input, llm_mapping, verbose)
-  input <- filter_result$data
-  diagnostics$skipped_filters <- filter_result$skipped
-  diagnostics$applied_filters <- filter_result$applied
-  n_after <- nrow(input)
-  
-  if (verbose) {
-    message(sprintf("== LLM Filters: %d -> %d rows (removed %d) ==",
-                    n_before, n_after, n_before - n_after))
-  }
+  filter_cfg <- .buildFilterConfigs(input, llm_mapping, verbose)
+  diagnostics$skipped_filters <- filter_cfg$skipped
+  diagnostics$applied_filters <- filter_cfg$applied
   
   # ---------------------------------------------------------------
   # 3. Select and rename columns to MSstats names
   # ---------------------------------------------------------------
-  # Keep only the columns we need — demote hallucinated columns to NA fill
   source_cols <- unlist(mapping$rename_map)
   missing_in_data <- setdiff(source_cols, colnames(input))
   if (length(missing_in_data) > 0) {
@@ -107,7 +102,6 @@ LLMtoMSstatsFormat <- function(
                       paste(missing_in_data, collapse = ", ")))
       message("  -> These fields will be filled with NA instead.")
     }
-    # Record and demote hallucinated mappings to fill list
     for (field in names(mapping$rename_map)) {
       if (mapping$rename_map[[field]] %in% missing_in_data) {
         diagnostics$hallucinated_columns <- rbind(
@@ -124,12 +118,13 @@ LLMtoMSstatsFormat <- function(
     source_cols <- unlist(mapping$rename_map)
   }
   
-  # Subset to mapped columns (plus any extras needed for annotation merge)
-  keep_cols <- unique(c(source_cols, 
-                        intersect(c("Condition", "BioReplicate"), colnames(input))))
+  # Filter columns must survive the subset; MSstatsPreprocess drops them.
+  annot_candidates <- grep("Condition|Replicate", colnames(input),
+                           value = TRUE, ignore.case = TRUE)
+  keep_cols <- unique(c(source_cols, annot_candidates, filter_cfg$keep_cols))
+  keep_cols <- intersect(keep_cols, colnames(input))
   input <- input[, keep_cols, with = FALSE]
   
-  # Rename: source name -> MSstats name
   for (msstats_name in names(mapping$rename_map)) {
     src <- mapping$rename_map[[msstats_name]]
     if (src %in% colnames(input)) {
@@ -138,31 +133,29 @@ LLMtoMSstatsFormat <- function(
   }
   
   # ---------------------------------------------------------------
-  # 4. Fill missing MSstats columns with NA
+  # 4. Fill missing MSstats columns
+  #    FragmentIon and ProductCharge go via columns_to_fill, as in the
+  #    converters; filling them here drops them from the output.
   # ---------------------------------------------------------------
-  for (col in mapping$fill_columns) {
+  preprocess_fill <- intersect(mapping$fill_columns,
+                               c("FragmentIon", "ProductCharge"))
+  for (col in setdiff(mapping$fill_columns, preprocess_fill)) {
     input[[col]] <- NA
   }
   
-  # IsotopeLabelType is always required
-  if (!"IsotopeLabelType" %in% colnames(input)) {
-    input[["IsotopeLabelType"]] <- "L"
+  if (!"Run" %in% colnames(input)) {
+    stop("LLM mapping did not produce a 'Run' column.")
   }
   
   # ---------------------------------------------------------------
-  # 5. Type coercion for MSstats expectations
+  # 5. Type coercion. Intensity == 0 -> NA matches the converters; the
+  #    previous < 1 also nulled values the converters keep.
   # ---------------------------------------------------------------
   if ("Intensity" %in% colnames(input)) {
     suppressWarnings(
       input[, Intensity := as.numeric(as.character(Intensity))]
     )
-    n_below <- sum(!is.na(input$Intensity) & input$Intensity < 1)
-    if (n_below > 0) {
-      input[Intensity < 1, Intensity := NA_real_]
-      if (verbose) {
-        message(sprintf("  Set %d Intensity values < 1 to NA", n_below))
-      }
-    }
+    input[, Intensity := ifelse(Intensity == 0, NA_real_, Intensity)]
   }
   if ("PrecursorCharge" %in% colnames(input)) {
     suppressWarnings(
@@ -174,136 +167,102 @@ LLMtoMSstatsFormat <- function(
       input[, ProductCharge := as.integer(as.character(ProductCharge))]
     )
   }
-
   if ("Qvalue" %in% colnames(input)) {
     suppressWarnings(
       input[, Qvalue := as.numeric(as.character(Qvalue))]
     )
-    if (!is.null(qvalue_cutoff)) {
-      n_before <- nrow(input)
-      input <- input[is.na(Qvalue) | Qvalue < qvalue_cutoff]
-      if (verbose) {
-        message(sprintf("  Qvalue filter (< %s): removed %d rows",
-                        qvalue_cutoff, n_before - nrow(input)))
-      }
-    }
-  } else if (!is.null(qvalue_cutoff) && verbose) {
-    message("  Qvalue filter skipped: no Qvalue column mapped")
   }
   
   # ---------------------------------------------------------------
-  # 6. Merge annotation
+  # 6. Annotation
   # ---------------------------------------------------------------
-  if (!"Run" %in% colnames(input)) {
-    stop("LLM mapping did not produce a 'Run' column.")
-  }
-  
-  if (is.character(annotation) || is.factor(annotation)) {
-    annotation <- data.table::fread(annotation)
-  }
-  annotation <- data.table::as.data.table(annotation)
-  
-  # Find the annotation column whose values match the Run values in input.
-  # This avoids depending on annotation column naming conventions.
-  input_runs <- unique(as.character(input$Run))
-  annot_run_col <- NULL
-  
-  for (acol in colnames(annotation)) {
-    annot_vals <- unique(as.character(annotation[[acol]]))
-    overlap <- length(intersect(input_runs, annot_vals))
-    if (overlap > 0 && overlap >= length(input_runs) * 0.5) {
-      annot_run_col <- acol
-      break
+  if (is.null(annotation)) {
+    cond_col <- grep("Condition", colnames(input), value = TRUE,
+                     ignore.case = TRUE)[1]
+    brep_col <- grep("Replicate", colnames(input), value = TRUE,
+                     ignore.case = TRUE)[1]
+    if (is.na(cond_col) || is.na(brep_col)) {
+      stop("annotation is NULL and no Condition / BioReplicate columns ",
+           "were found in input.")
     }
-  }
-  
-  if (is.null(annot_run_col)) {
-    warning("Could not find annotation column matching Run values. ",
-            "Condition and BioReplicate will be NA.\n",
-            "  Input runs: ", paste(head(input_runs, 3), collapse = ", "), "\n",
-            "  Annotation cols: ", paste(colnames(annotation), collapse = ", "))
-  } else {
+    annotation <- unique(input[, .(Run = as.character(Run),
+                                   Condition = get(cond_col),
+                                   BioReplicate = get(brep_col))])
     if (verbose) {
-      message(sprintf("  Annotation merge: input$Run <-> annotation$%s", annot_run_col))
+      message(sprintf("  Annotation extracted from input: %s, %s",
+                      cond_col, brep_col))
     }
-    # Rename annotation column to Run for merge
-    if (annot_run_col != "Run") {
-      data.table::setnames(annotation, annot_run_col, "Run")
+    input[, (setdiff(c(cond_col, brep_col), "Run")) := NULL]
+  } else {
+    if (is.character(annotation) || is.factor(annotation)) {
+      annotation <- data.table::fread(annotation)
     }
-    input <- merge(input, annotation, by = "Run", all.x = TRUE,
-                   suffixes = c("", ".annot"))
+    annotation <- data.table::as.data.table(annotation)
   }
   
+  # Standardizes run labels, stripping '.' and '%'. Every converter calls it.
+  annotation <- MSstatsConvert::MSstatsMakeAnnotation(input, annotation)
+  
   # ---------------------------------------------------------------
-  # 7. Determine feature columns based on what's available
+  # 7. Hand off to the shared MSstatsConvert pipeline. Shared peptide
+  #    removal, single-feature removal, PSM summarization and the
+  #    few-measurements filter were reimplemented by hand here, which is
+  #    why removeFewMeasurements was accepted but never used.
   # ---------------------------------------------------------------
-  possible_features <- c("PeptideSequence", "PrecursorCharge", 
-                         "FragmentIon", "ProductCharge")
-  feature_columns <- intersect(possible_features, colnames(input))
-  # Only use feature columns that aren't entirely NA
+  feature_columns <- c("PeptideSequence", "PrecursorCharge",
+                       "FragmentIon", "ProductCharge")
+  
+  # A field the tool does not report is not a feature.
   feature_columns <- feature_columns[
-    sapply(feature_columns, function(col) !all(is.na(input[[col]])))
+    vapply(feature_columns, function(col) {
+      col %in% colnames(input) && !all(is.na(input[[col]]))
+    }, logical(1))
   ]
   
-  # At minimum, PeptideSequence must be a feature column
-  if (!"PeptideSequence" %in% feature_columns) {
-    stop("PeptideSequence column is missing or entirely NA after mapping.")
+  preprocess_feature_columns <- if ("IsotopeLabelType" %in% colnames(input)) {
+    c(feature_columns, "IsotopeLabelType")
+  } else {
+    feature_columns
+  }
+  columns_to_fill <- stats::setNames(
+    rep(list(NA), length(preprocess_fill)), preprocess_fill)
+  if (!"IsotopeLabelType" %in% colnames(input)) {
+    columns_to_fill[["IsotopeLabelType"]] <- "L"
   }
   
-  # ---------------------------------------------------------------
-  # 8. Standard MSstats cleanup
-  # ---------------------------------------------------------------
-  # Remove shared peptides if requested
-  if (useUniquePeptide && "ProteinName" %in% colnames(input)) {
-    # Simple shared peptide removal: drop peptides mapping to multiple proteins
-    pep_prot <- unique(input[, .(PeptideSequence, ProteinName)])
-    shared <- pep_prot[, .N, by = PeptideSequence][N > 1]$PeptideSequence
-    if (length(shared) > 0) {
-      input <- input[!PeptideSequence %in% shared]
-      if (verbose) {
-        message(sprintf("  Removed %d shared peptides", length(shared)))
-      }
-    }
+  score_filtering <- filter_cfg$score
+  if ("Qvalue" %in% colnames(input)) {
+    score_filtering$llm_qvalue <- list(
+      score_column    = "Qvalue",
+      score_threshold = qvalue_cutoff,
+      direction       = "smaller",
+      behavior        = "fill",
+      handle_na       = "keep",
+      fill_value      = NA_real_,
+      filter          = filter_with_Qvalue,
+      drop_column     = TRUE
+    )
   }
   
-  # Remove proteins with single feature
-  if (removeProtein_with1Peptide && "ProteinName" %in% colnames(input)) {
-    feat_count <- unique(input[, c("ProteinName", feature_columns), with = FALSE])
-    feat_count <- feat_count[, .N, by = ProteinName]
-    single_feat <- feat_count[N <= 1]$ProteinName
-    if (length(single_feat) > 0) {
-      input <- input[!ProteinName %in% single_feat]
-      if (verbose) {
-        message(sprintf("  Removed %d single-feature proteins", length(single_feat)))
-      }
-    }
-  }
+  input <- MSstatsConvert::MSstatsPreprocess(
+    input,
+    annotation,
+    preprocess_feature_columns,
+    remove_shared_peptides = useUniquePeptide,
+    remove_single_feature_proteins = removeProtein_with1Peptide,
+    feature_cleaning = list(
+      remove_features_with_few_measurements = removeFewMeasurements,
+      summarize_multiple_psms = summaryforMultipleRows
+    ),
+    score_filtering = score_filtering,
+    exact_filtering = filter_cfg$exact,
+    columns_to_fill = columns_to_fill
+  )
   
-  # Summarize multiple PSMs per feature (e.g., take max intensity)
-  key_cols <- c("ProteinName", feature_columns, "Run",
-                "Condition", "BioReplicate", "IsotopeLabelType")
-  key_cols <- intersect(key_cols, colnames(input))
-  if (anyDuplicated(input, by = key_cols)) {
-    input <- input[, .(Intensity = summaryforMultipleRows(Intensity, na.rm = TRUE)),
-                   by = key_cols]
-    if (verbose) message("  Summarized multiple PSMs per feature")
-  }
-  
-  # ---------------------------------------------------------------
-  # 9. Ensure required MSstats columns are present
-  # ---------------------------------------------------------------
-  required_final <- c("ProteinName", "PeptideSequence", "PrecursorCharge",
-                      "FragmentIon", "ProductCharge", "IsotopeLabelType",
-                      "Condition", "BioReplicate", "Run", "Intensity")
-  
-  for (col in required_final) {
-    if (!col %in% colnames(input)) {
-      input[[col]] <- NA
-    }
-  }
-  
-  # Select final columns in MSstats order
-  input <- input[, required_final, with = FALSE]
+  input <- MSstatsConvert::MSstatsBalancedDesign(
+    input, feature_columns,
+    remove_few = removeFewMeasurements
+  )
   
   if (verbose) {
     message(sprintf("== LLM converter finished: %d rows, %d proteins, %d runs ==",
@@ -336,7 +295,6 @@ LLMtoMSstatsFormat <- function(
 .parseLLMMapping <- function(llm_mapping) {
   mappings <- llm_mapping$mappings
   
-  # Normalize data.frame to list-of-lists
   if (is.data.frame(mappings)) {
     mappings <- lapply(seq_len(nrow(mappings)), function(i) as.list(mappings[i, ]))
   }
@@ -361,103 +319,158 @@ LLMtoMSstatsFormat <- function(
 }
 
 
-#' Apply LLM-discovered filters to raw data
-#' @param input data.table
+#' Translate LLM-discovered filters into MSstatsPreprocess filter configs
+#'
+#' Numeric comparisons become `score_filtering`, value matches become
+#' `exact_filtering`, both with `behavior = "fill"`.
+#'
+#' `equals` on a logical column is inverted to `not_equals`, since
+#' `filter_symbols` names the values to remove. On any other column type it
+#' cannot be expressed without enumerating the column, so it is skipped.
+#'
+#' @param input data.table of raw tool output, before renaming
 #' @param llm_mapping list with optional $filters array
 #' @param verbose logical
-#' @return filtered data.table
+#' @return list(score, exact, skipped, applied, keep_cols)
 #' @keywords internal
-.applyLLMFilters <- function(input, llm_mapping, verbose = TRUE) {
-  skipped <- data.table(column = character(0), operation = character(0),
-                        value = character(0), reason = character(0))
-  applied <- data.table(column = character(0), operation = character(0),
-                        value = character(0), rows_removed = integer(0))
+.buildFilterConfigs <- function(input, llm_mapping, verbose = TRUE) {
+  skipped <- data.table::data.table(
+    column = character(0), operation = character(0),
+    value = character(0), reason = character(0))
+  applied <- data.table::data.table(
+    column = character(0), operation = character(0),
+    value = character(0), kind = character(0))
   
-  # browser()
+  score <- list()
+  exact <- list()
+  keep_cols <- character(0)
+  
   filters <- llm_mapping$filters
-  if (is.null(filters)) return(list(data = input, skipped = skipped, applied = applied))
+  if (is.null(filters)) {
+    return(list(score = score, exact = exact, skipped = skipped,
+                applied = applied, keep_cols = keep_cols))
+  }
   
-  # Normalize
   if (is.data.frame(filters)) {
     filters <- lapply(seq_len(nrow(filters)), function(i) as.list(filters[i, ]))
   }
   
+  .skip <- function(col, op, val, reason) {
+    skipped <<- rbind(skipped, data.table::data.table(
+      column = as.character(col), operation = as.character(op),
+      value = as.character(val), reason = reason))
+    if (verbose) message(sprintf("  Filter skipped: %s", reason))
+  }
+  
+  i <- 0L
   for (f in filters) {
     col <- f[["column"]]
     op  <- f[["operation"]]
     val <- as.character(f[["value"]])
     
     if (is.null(col) || !col %in% colnames(input)) {
-      reason <- if (is.null(col)) "null column name" else paste0("column '", col, "' not in data")
-      skipped <- rbind(skipped, data.table(
-        column = as.character(col), operation = as.character(op),
-        value = val, reason = reason))
-      if (verbose) message(sprintf("  Filter skipped: %s", reason))
+      .skip(col, op, val,
+            if (is.null(col)) "null column name"
+            else paste0("column '", col, "' not in data"))
       next
     }
     
-    # Skip filters where the LLM couldn't determine a threshold
     if (is.null(val) || is.na(val) || val == "" || 
         tolower(val) %in% c("na", "null", "none")) {
-      skipped <- rbind(skipped, data.table(
-        column = col, operation = as.character(op),
-        value = val, reason = "no valid threshold value"))
-      if (verbose) {
-        message(sprintf("  Filter skipped: '%s %s' has no valid threshold value",
-                        col, op))
-      }
+      .skip(col, op, val, "no valid threshold value")
       next
     }
     
-    n_before <- nrow(input)
-    
-    input <- tryCatch({
-      col_vals <- input[[col]]
-      
-      # Coerce value to match column type
-      if (is.numeric(col_vals)) {
-        val <- as.numeric(val)
+    i <- i + 1L
+    key <- paste0("llm_", i)
+    col_vals <- input[[col]]
+  
+    if (op %in% c("less_than", "less_than_or_equals",
+                  "greater_than", "greater_than_or_equals")) {
+      threshold <- suppressWarnings(as.numeric(val))
+      if (is.na(threshold)) {
+        .skip(col, op, val, "non-numeric threshold for a numeric comparison")
+        next
       }
-      
-      keep <- switch(op,
-        "equals"               = col_vals == val,
-        "not_equals"           = col_vals != val,
-        "less_than"            = as.numeric(col_vals) < as.numeric(val),
-        "greater_than"         = as.numeric(col_vals) > as.numeric(val),
-        "less_than_or_equals"  = as.numeric(col_vals) <= as.numeric(val),
-        "greater_than_or_equals" = as.numeric(col_vals) >= as.numeric(val),
-        "contains"             = grepl(val, col_vals, fixed = TRUE),
-        "not_contains"         = !grepl(val, col_vals, fixed = TRUE),
-        {
-          skipped <<- rbind(skipped, data.table(
-            column = col, operation = as.character(op),
-            value = as.character(val), reason = paste0("unknown operation '", op, "'")))
-          if (verbose) message(sprintf("  Filter skipped: unknown operation '%s'", op))
-          rep(TRUE, nrow(input))
-        }
+      score[[key]] <- list(
+        score_column    = col,
+        score_threshold = threshold,
+        direction       = if (grepl("^less", op)) "smaller" else "greater",
+        behavior        = "fill",
+        handle_na       = "keep",
+        fill_value      = NA_real_,
+        filter          = TRUE,
+        drop_column     = TRUE
       )
-      
-      # Handle NAs in the keep vector — don't drop rows with NA filter values
-      keep[is.na(keep)] <- TRUE
-      input[keep]
-    }, error = function(e) {
-      skipped <<- rbind(skipped, data.table(
+      keep_cols <- c(keep_cols, col)
+      applied <- rbind(applied, data.table::data.table(
         column = col, operation = as.character(op),
-        value = as.character(val), reason = paste0("error: ", e$message)))
-      if (verbose) message(sprintf("  Filter failed on '%s': %s", col, e$message))
-      input
-    })
-    
-    rows_removed <- n_before - nrow(input)
-    applied <- rbind(applied, data.table(
-      column = col, operation = as.character(op),
-      value = as.character(val), rows_removed = as.integer(rows_removed)))
-    
+        value = val, kind = "score"))
+  
+    } else if (op == "not_equals") {
+      exact[[key]] <- list(
+        col_name       = col,
+        filter_symbols = .coerceFilterValue(val, col_vals),
+        behavior       = "fill",
+        fill_value     = NA_real_,
+        filter         = TRUE,
+        drop_column    = TRUE
+      )
+      keep_cols <- c(keep_cols, col)
+      applied <- rbind(applied, data.table::data.table(
+        column = col, operation = as.character(op),
+        value = val, kind = "exact"))
+  
+    } else if (op == "equals") {
+      if (!is.logical(col_vals)) {
+        .skip(col, op, val,
+              "equals on a non-logical column cannot be expressed as a removal set")
+        next
+      }
+      target <- suppressWarnings(as.logical(val))
+      if (is.na(target)) {
+        .skip(col, op, val, "value is not a logical")
+        next
+      }
+      exact[[key]] <- list(
+        col_name       = col,
+        filter_symbols = !target,
+        behavior       = "fill",
+        fill_value     = NA_real_,
+        filter         = TRUE,
+        drop_column    = TRUE
+      )
+      keep_cols <- c(keep_cols, col)
+      applied <- rbind(applied, data.table::data.table(
+        column = col, operation = "equals (inverted)",
+        value = val, kind = "exact"))
+  
+    } else {
+      .skip(col, op, val,
+            paste0("operation '", op, "' has no MSstatsPreprocess equivalent"))
+      next
+    }
+  
     if (verbose) {
-      message(sprintf("  Filter: %s %s %s -> removed %d rows",
-                      col, op, val, rows_removed))
+      message(sprintf("  Filter registered: %s %s %s", col, op, val))
     }
   }
   
-  list(data = input, skipped = skipped, applied = applied)
+  list(score = score, exact = exact, skipped = skipped,
+       applied = applied, keep_cols = unique(keep_cols))
+}
+  
+  
+#' Coerce a filter value to the column's type
+#' @keywords internal
+.coerceFilterValue <- function(val, col_vals) {
+  if (is.logical(col_vals)) {
+    out <- suppressWarnings(as.logical(val))
+    if (!is.na(out)) return(out)
+  }
+  if (is.numeric(col_vals)) {
+    out <- suppressWarnings(as.numeric(val))
+    if (!is.na(out)) return(out)
+  }
+  val
 }
