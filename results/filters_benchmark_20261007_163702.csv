@@ -1,0 +1,301 @@
+column,dtype,operation,value,description,confidence,model,tool,prompt,rep,source
+F.ExcludedFromQuantification,boolean,not_equals,TRUE,Exclude features flagged as excluded from quantification,1,llama3.2-3b,spectronaut,filter_aware,1,benchmark
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,1,llama3.2-3b,spectronaut,filter_aware,1,benchmark
+F.FrgIon,string,contains,y,Filter by fragment ion type,0.8,llama3.2-3b,spectronaut,filter_aware,1,benchmark
+EG.Library,string,equals,directDIA™,Filter by library,0.8,llama3.2-3b,spectronaut,filter_aware,1,benchmark
+EG.Qvalue,numeric,less_than,:,Filter by q-value,0.8,llama3.2-3b,spectronaut,filter_aware,1,benchmark
+F.ExcludedFromQuantification,boolean,not_equals,TRUE,Exclude features flagged as excluded from quantification,1,llama3.2-3b,spectronaut,filter_aware,2,benchmark
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,1,llama3.2-3b,spectronaut,filter_aware,2,benchmark
+F.FrgIon,string,contains,y,Filter by fragment ion type,0.8,llama3.2-3b,spectronaut,filter_aware,2,benchmark
+EG.Library,string,equals,directDIA™,Filter by library,0.8,llama3.2-3b,spectronaut,filter_aware,2,benchmark
+EG.Qvalue,numeric,less_than,:,Filter by q-value,0.8,llama3.2-3b,spectronaut,filter_aware,2,benchmark
+F.ExcludedFromQuantification,boolean,not_equals,TRUE,Exclude features flagged as excluded from quantification,1,llama3.2-3b,spectronaut,filter_aware,3,benchmark
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,1,llama3.2-3b,spectronaut,filter_aware,3,benchmark
+F.FrgIon,string,contains,y,Filter by fragment ion type,0.8,llama3.2-3b,spectronaut,filter_aware,3,benchmark
+EG.Library,string,equals,directDIA™,Filter by library,0.8,llama3.2-3b,spectronaut,filter_aware,3,benchmark
+EG.Qvalue,numeric,less_than,:,Filter by q-value,0.8,llama3.2-3b,spectronaut,filter_aware,3,benchmark
+R.Condition,string,equals,A,Condition filter,1,llama3.2-3b,spectronaut,constrained_filter,1,benchmark
+F.ExcludedFromQuantification,boolean,not_equals,FALSE,Excluded from quantification filter,1,llama3.2-3b,spectronaut,constrained_filter,1,benchmark
+EG.Library,string,equals,directDIA™,Library filter,1,llama3.2-3b,spectronaut,constrained_filter,1,benchmark
+EG.ModifiedSequence,string,contains,_,Modified sequence filter,0.8,llama3.2-3b,spectronaut,constrained_filter,1,benchmark
+EG.PrecursorId,string,equals,_GPLATGGIK_.1,Precursor ID filter,0.8,llama3.2-3b,spectronaut,constrained_filter,1,benchmark
+F.FrgIon,string,contains,y,FragIon filter,0.8,llama3.2-3b,spectronaut,constrained_filter,1,benchmark
+F.FrgLossType,string,equals,noloss,FragLossType filter,0.8,llama3.2-3b,spectronaut,constrained_filter,1,benchmark
+R.Condition,string,equals,A,Condition filter,1,llama3.2-3b,spectronaut,constrained_filter,2,benchmark
+F.ExcludedFromQuantification,boolean,not_equals,FALSE,Excluded from quantification filter,1,llama3.2-3b,spectronaut,constrained_filter,2,benchmark
+EG.Library,string,equals,directDIA™,Library filter,1,llama3.2-3b,spectronaut,constrained_filter,2,benchmark
+EG.ModifiedSequence,string,contains,_,Modified sequence filter,0.8,llama3.2-3b,spectronaut,constrained_filter,2,benchmark
+EG.PrecursorId,string,equals,_GPLATGGIK_.1,Precursor ID filter,0.8,llama3.2-3b,spectronaut,constrained_filter,2,benchmark
+F.FrgIon,string,contains,y,FragIon filter,0.8,llama3.2-3b,spectronaut,constrained_filter,2,benchmark
+F.FrgLossType,string,equals,noloss,FragLossType filter,0.8,llama3.2-3b,spectronaut,constrained_filter,2,benchmark
+R.Condition,string,equals,A,Condition filter,1,llama3.2-3b,spectronaut,constrained_filter,3,benchmark
+F.ExcludedFromQuantification,boolean,not_equals,FALSE,Excluded from quantification filter,1,llama3.2-3b,spectronaut,constrained_filter,3,benchmark
+EG.Library,string,equals,directDIA™,Library filter,1,llama3.2-3b,spectronaut,constrained_filter,3,benchmark
+EG.ModifiedSequence,string,contains,_,Modified sequence filter,0.8,llama3.2-3b,spectronaut,constrained_filter,3,benchmark
+EG.PrecursorId,string,equals,_GPLATGGIK_.1,Precursor ID filter,0.8,llama3.2-3b,spectronaut,constrained_filter,3,benchmark
+F.FrgIon,string,contains,y,FragIon filter,0.8,llama3.2-3b,spectronaut,constrained_filter,3,benchmark
+F.FrgLossType,string,equals,noloss,FragLossType filter,0.8,llama3.2-3b,spectronaut,constrained_filter,3,benchmark
+Confidence.Level,string,equals,High,Filter for high confidence level,0.5,llama3.2-3b,proteome_discoverer,filter_aware,1,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,Filter for unambiguous PSMs,0.5,llama3.2-3b,proteome_discoverer,filter_aware,1,benchmark
+Decoy.Peptides.Matched,string,not_equals,"11,6,17",Filter out decoy peptides,0.8,llama3.2-3b,proteome_discoverer,filter_aware,1,benchmark
+QuanResultID,string,equals,null,Filter for no quantification results,0.8,llama3.2-3b,proteome_discoverer,filter_aware,1,benchmark
+Homology.Threshold,string,equals,13,Filter for homology threshold,0.8,llama3.2-3b,proteome_discoverer,filter_aware,1,benchmark
+Identity.High,string,equals,13,Filter for high identity,0.8,llama3.2-3b,proteome_discoverer,filter_aware,1,benchmark
+Identity.Middle,string,equals,13,Filter for middle identity,0.8,llama3.2-3b,proteome_discoverer,filter_aware,1,benchmark
+Missed.Cleavages,string,equals,0,Filter for no missed cleavages,0.8,llama3.2-3b,proteome_discoverer,filter_aware,1,benchmark
+Isolation.Interference,string,equals,"53,8,38",Filter for isolation interference,0.8,llama3.2-3b,proteome_discoverer,filter_aware,1,benchmark
+Confidence.Level,string,equals,High,Filter for high confidence level,0.5,llama3.2-3b,proteome_discoverer,filter_aware,2,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,Filter for unambiguous PSMs,0.5,llama3.2-3b,proteome_discoverer,filter_aware,2,benchmark
+Decoy.Peptides.Matched,string,not_equals,"11,6,17",Filter out decoy peptides,0.8,llama3.2-3b,proteome_discoverer,filter_aware,2,benchmark
+QuanResultID,string,equals,null,Filter for no quantification results,0.8,llama3.2-3b,proteome_discoverer,filter_aware,2,benchmark
+Homology.Threshold,string,equals,13,Filter for homology threshold,0.8,llama3.2-3b,proteome_discoverer,filter_aware,2,benchmark
+Identity.High,string,equals,13,Filter for high identity,0.8,llama3.2-3b,proteome_discoverer,filter_aware,2,benchmark
+Identity.Middle,string,equals,13,Filter for middle identity,0.8,llama3.2-3b,proteome_discoverer,filter_aware,2,benchmark
+Missed.Cleavages,string,equals,0,Filter for no missed cleavages,0.8,llama3.2-3b,proteome_discoverer,filter_aware,2,benchmark
+Isolation.Interference,string,equals,"53,8,38",Filter for isolation interference,0.8,llama3.2-3b,proteome_discoverer,filter_aware,2,benchmark
+Confidence.Level,string,equals,High,Filter for high confidence level,0.5,llama3.2-3b,proteome_discoverer,filter_aware,3,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,Filter for unambiguous PSMs,0.5,llama3.2-3b,proteome_discoverer,filter_aware,3,benchmark
+Decoy.Peptides.Matched,string,not_equals,"11,6,17",Filter out decoy peptides,0.8,llama3.2-3b,proteome_discoverer,filter_aware,3,benchmark
+QuanResultID,string,equals,null,Filter for no quantification results,0.8,llama3.2-3b,proteome_discoverer,filter_aware,3,benchmark
+Homology.Threshold,string,equals,13,Filter for homology threshold,0.8,llama3.2-3b,proteome_discoverer,filter_aware,3,benchmark
+Identity.High,string,equals,13,Filter for high identity,0.8,llama3.2-3b,proteome_discoverer,filter_aware,3,benchmark
+Identity.Middle,string,equals,13,Filter for middle identity,0.8,llama3.2-3b,proteome_discoverer,filter_aware,3,benchmark
+Missed.Cleavages,string,equals,0,Filter for no missed cleavages,0.8,llama3.2-3b,proteome_discoverer,filter_aware,3,benchmark
+Isolation.Interference,string,equals,"53,8,38",Filter for isolation interference,0.8,llama3.2-3b,proteome_discoverer,filter_aware,3,benchmark
+Confidence.Level,string,equals,High,Filter for high confidence levels,1,llama3.2-3b,proteome_discoverer,constrained_filter,1,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,Filter for unambiguous PSMs,1,llama3.2-3b,proteome_discoverer,constrained_filter,1,benchmark
+Decoy.Peptides.Matched,numeric,not_equals,0,Filter for no matched decoy peptides,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,1,benchmark
+QuanResultID,null,equals,null,Filter for no quantification results,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,1,benchmark
+Homology.Threshold,numeric,greater_than,Mythical,Filter for high homology threshold,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,1,benchmark
+Identity.High,numeric,greater_than,Mythical,Filter for high identity,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,1,benchmark
+Identity.Middle,numeric,greater_than,Mythical,Filter for middle identity,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,1,benchmark
+IonScore,numeric,less_than,Mythical,Filter for low ion score,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,1,benchmark
+Isolation.Interference,numeric,greater_than,Mythical,Filter for high isolation interference,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,1,benchmark
+Confidence.Level,string,equals,High,Filter for high confidence levels,1,llama3.2-3b,proteome_discoverer,constrained_filter,2,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,Filter for unambiguous PSMs,1,llama3.2-3b,proteome_discoverer,constrained_filter,2,benchmark
+Decoy.Peptides.Matched,numeric,not_equals,0,Filter for no matched decoy peptides,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,2,benchmark
+QuanResultID,null,equals,null,Filter for no quantification results,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,2,benchmark
+Homology.Threshold,numeric,greater_than,Mythical,Filter for high homology threshold,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,2,benchmark
+Identity.High,numeric,greater_than,Mythical,Filter for high identity,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,2,benchmark
+Identity.Middle,numeric,greater_than,Mythical,Filter for middle identity,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,2,benchmark
+IonScore,numeric,less_than,Mythical,Filter for low ion score,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,2,benchmark
+Isolation.Interference,numeric,greater_than,Mythical,Filter for high isolation interference,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,2,benchmark
+Confidence.Level,string,equals,High,Filter for high confidence levels,1,llama3.2-3b,proteome_discoverer,constrained_filter,3,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,Filter for unambiguous PSMs,1,llama3.2-3b,proteome_discoverer,constrained_filter,3,benchmark
+Decoy.Peptides.Matched,numeric,not_equals,0,Filter for no matched decoy peptides,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,3,benchmark
+QuanResultID,null,equals,null,Filter for no quantification results,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,3,benchmark
+Homology.Threshold,numeric,greater_than,Mythical,Filter for high homology threshold,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,3,benchmark
+Identity.High,numeric,greater_than,Mythical,Filter for high identity,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,3,benchmark
+Identity.Middle,numeric,greater_than,Mythical,Filter for middle identity,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,3,benchmark
+IonScore,numeric,less_than,Mythical,Filter for low ion score,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,3,benchmark
+Isolation.Interference,numeric,greater_than,Mythical,Filter for high isolation interference,0.8,llama3.2-3b,proteome_discoverer,constrained_filter,3,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Remove decoy peptides,0.9,llama3.2-3b,metamorpheus,filter_aware,1,benchmark
+Random.RT,boolean,equals,FALSE,Remove random retention time features,0.9,llama3.2-3b,metamorpheus,filter_aware,1,benchmark
+Num.Charge.States.Observed,numeric,greater_than,2,Filter out peptides with more than 2 charge states,0.8,llama3.2-3b,metamorpheus,filter_aware,1,benchmark
+PSMs.Mapped,numeric,less_than,10,Filter out peptides with more than 10 mapped PSMs,0.8,llama3.2-3b,metamorpheus,filter_aware,1,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Remove decoy peptides,0.9,llama3.2-3b,metamorpheus,filter_aware,2,benchmark
+Random.RT,boolean,equals,FALSE,Remove random retention time features,0.9,llama3.2-3b,metamorpheus,filter_aware,2,benchmark
+Num.Charge.States.Observed,numeric,greater_than,2,Filter out peptides with more than 2 charge states,0.8,llama3.2-3b,metamorpheus,filter_aware,2,benchmark
+PSMs.Mapped,numeric,less_than,10,Filter out peptides with more than 10 mapped PSMs,0.8,llama3.2-3b,metamorpheus,filter_aware,2,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Remove decoy peptides,0.9,llama3.2-3b,metamorpheus,filter_aware,3,benchmark
+Random.RT,boolean,equals,FALSE,Remove random retention time features,0.9,llama3.2-3b,metamorpheus,filter_aware,3,benchmark
+Num.Charge.States.Observed,numeric,greater_than,2,Filter out peptides with more than 2 charge states,0.8,llama3.2-3b,metamorpheus,filter_aware,3,benchmark
+PSMs.Mapped,numeric,less_than,10,Filter out peptides with more than 10 mapped PSMs,0.8,llama3.2-3b,metamorpheus,filter_aware,3,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Decoy peptide flag,1,llama3.2-3b,metamorpheus,constrained_filter,1,benchmark
+Random.RT,boolean,equals,FALSE,Random retention time flag,1,llama3.2-3b,metamorpheus,constrained_filter,1,benchmark
+Num.Charge.States.Observed,numeric,greater_than,> 1,Number of charge states observed,0.8,llama3.2-3b,metamorpheus,constrained_filter,1,benchmark
+Peak.Detection.Type,string,not_equals,MSMS,Peak detection type,0.8,llama3.2-3b,metamorpheus,constrained_filter,1,benchmark
+Peak.Apex.Mass.Error.ppm,numeric,greater_than,> 2,Peak apex mass error (ppm),0.8,llama3.2-3b,metamorpheus,constrained_filter,1,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Decoy peptide flag,1,llama3.2-3b,metamorpheus,constrained_filter,2,benchmark
+Random.RT,boolean,equals,FALSE,Random retention time flag,1,llama3.2-3b,metamorpheus,constrained_filter,2,benchmark
+Num.Charge.States.Observed,numeric,greater_than,> 1,Number of charge states observed,0.8,llama3.2-3b,metamorpheus,constrained_filter,2,benchmark
+Peak.Detection.Type,string,not_equals,MSMS,Peak detection type,0.8,llama3.2-3b,metamorpheus,constrained_filter,2,benchmark
+Peak.Apex.Mass.Error.ppm,numeric,greater_than,> 2,Peak apex mass error (ppm),0.8,llama3.2-3b,metamorpheus,constrained_filter,2,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Decoy peptide flag,1,llama3.2-3b,metamorpheus,constrained_filter,3,benchmark
+Random.RT,boolean,equals,FALSE,Random retention time flag,1,llama3.2-3b,metamorpheus,constrained_filter,3,benchmark
+Num.Charge.States.Observed,numeric,greater_than,> 1,Number of charge states observed,0.8,llama3.2-3b,metamorpheus,constrained_filter,3,benchmark
+Peak.Detection.Type,string,not_equals,MSMS,Peak detection type,0.8,llama3.2-3b,metamorpheus,constrained_filter,3,benchmark
+Peak.Apex.Mass.Error.ppm,numeric,greater_than,> 2,Peak apex mass error (ppm),0.8,llama3.2-3b,metamorpheus,constrained_filter,3,benchmark
+F.ExcludedFromQuantification,boolean,equals,TRUE,Exclude features flagged as excluded from quantification,0.8,llama3.1-8b,spectronaut,filter_aware,1,benchmark
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.9,llama3.1-8b,spectronaut,filter_aware,1,benchmark
+EG.Qvalue,numeric,less_than,E-05,Filter out features with high q-values,0.7,llama3.1-8b,spectronaut,filter_aware,1,benchmark
+F.ExcludedFromQuantification,boolean,equals,TRUE,Exclude features flagged as excluded from quantification,0.8,llama3.1-8b,spectronaut,filter_aware,2,benchmark
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.9,llama3.1-8b,spectronaut,filter_aware,2,benchmark
+EG.Qvalue,numeric,less_than,E-05,Filter out features with high q-values,0.7,llama3.1-8b,spectronaut,filter_aware,2,benchmark
+F.ExcludedFromQuantification,boolean,equals,TRUE,Exclude features flagged as excluded from quantification,0.8,llama3.1-8b,spectronaut,filter_aware,3,benchmark
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.9,llama3.1-8b,spectronaut,filter_aware,3,benchmark
+EG.Qvalue,numeric,less_than,E-05,Filter out features with high q-values,0.7,llama3.1-8b,spectronaut,filter_aware,3,benchmark
+F.ExcludedFromQuantification,boolean,equals,TRUE,Exclude features from quantification,0.9,llama3.1-8b,spectronaut,constrained_filter,1,benchmark
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.9,llama3.1-8b,spectronaut,constrained_filter,1,benchmark
+EG.Qvalue,numeric,less_than,E-05,Filter out features with high Q-value,0.8,llama3.1-8b,spectronaut,constrained_filter,1,benchmark
+F.ExcludedFromQuantification,boolean,equals,TRUE,Exclude features from quantification,0.9,llama3.1-8b,spectronaut,constrained_filter,2,benchmark
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.9,llama3.1-8b,spectronaut,constrained_filter,2,benchmark
+EG.Qvalue,numeric,less_than,E-05,Filter out features with high Q-value,0.8,llama3.1-8b,spectronaut,constrained_filter,2,benchmark
+F.ExcludedFromQuantification,boolean,equals,TRUE,Exclude features from quantification,0.9,llama3.1-8b,spectronaut,constrained_filter,3,benchmark
+F.FrgLossType,string,equals,noloss,Keep only 'noloss' fragments,0.9,llama3.1-8b,spectronaut,constrained_filter,3,benchmark
+EG.Qvalue,numeric,less_than,E-05,Filter out features with high Q-value,0.8,llama3.1-8b,spectronaut,constrained_filter,3,benchmark
+Decoy.Peptides.Matched,numeric,equals,0,Remove decoy peptides,0.9,llama3.1-8b,proteome_discoverer,filter_aware,1,benchmark
+QuanResultID,string,not_equals,"",Remove empty QuanResultID,0.8,llama3.1-8b,proteome_discoverer,filter_aware,1,benchmark
+Activation.Type,string,equals,CID,Only consider CID-activated spectra,0.7,llama3.1-8b,proteome_discoverer,filter_aware,1,benchmark
+Missed.Cleavages,numeric,less_than,1,Only consider spectra with 0 or 1 missed cleavage,0.6,llama3.1-8b,proteome_discoverer,filter_aware,1,benchmark
+Decoy.Peptides.Matched,numeric,equals,0,Remove decoy peptides,0.9,llama3.1-8b,proteome_discoverer,filter_aware,2,benchmark
+QuanResultID,string,not_equals,"",Remove empty QuanResultID,0.8,llama3.1-8b,proteome_discoverer,filter_aware,2,benchmark
+Activation.Type,string,equals,CID,Only consider CID-activated spectra,0.7,llama3.1-8b,proteome_discoverer,filter_aware,2,benchmark
+Missed.Cleavages,numeric,less_than,1,Only consider spectra with 0 or 1 missed cleavage,0.6,llama3.1-8b,proteome_discoverer,filter_aware,2,benchmark
+Decoy.Peptides.Matched,numeric,equals,0,Remove decoy peptides,0.9,llama3.1-8b,proteome_discoverer,filter_aware,3,benchmark
+QuanResultID,string,not_equals,"",Remove empty QuanResultID,0.8,llama3.1-8b,proteome_discoverer,filter_aware,3,benchmark
+Activation.Type,string,equals,CID,Only consider CID-activated spectra,0.7,llama3.1-8b,proteome_discoverer,filter_aware,3,benchmark
+Missed.Cleavages,numeric,less_than,1,Only consider spectra with 0 or 1 missed cleavage,0.6,llama3.1-8b,proteome_discoverer,filter_aware,3,benchmark
+Decoy.Peptides.Matched,numeric,greater_than,> 0,Decoy peptides matched,0.9,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+Peptides.Matched,numeric,greater_than,5,Peptides matched,0.8,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+Missed.Cleavages,numeric,equals,0,Missed cleavages,0.8,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+Isolation.Interference,numeric,less_than,10,Isolation interference,0.7,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+Ion.Inject.Time.ms,numeric,less_than,5,Ion inject time,0.7,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+Exp.Value,numeric,greater_than,0.01,Expected value,0.6,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+Homology.Threshold,numeric,greater_than,10,Homology threshold,0.5,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+Identity.High,numeric,greater_than,10,Identity high,0.5,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+Identity.Middle,numeric,greater_than,10,Identity middle,0.5,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+IonScore,numeric,greater_than,20,Ion score,0.4,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+QuanResultID,string,not_equals,[],Quantification result ID,0.3,llama3.1-8b,proteome_discoverer,constrained_filter,1,benchmark
+Decoy.Peptides.Matched,numeric,greater_than,> 0,Decoy peptides matched,0.9,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+Peptides.Matched,numeric,greater_than,5,Peptides matched,0.8,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+Missed.Cleavages,numeric,equals,0,Missed cleavages,0.8,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+Isolation.Interference,numeric,less_than,10,Isolation interference,0.7,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+Ion.Inject.Time.ms,numeric,less_than,5,Ion inject time,0.7,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+Exp.Value,numeric,greater_than,0.01,Expected value,0.6,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+Homology.Threshold,numeric,greater_than,10,Homology threshold,0.5,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+Identity.High,numeric,greater_than,10,Identity high,0.5,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+Identity.Middle,numeric,greater_than,10,Identity middle,0.5,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+IonScore,numeric,greater_than,20,Ion score,0.4,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+QuanResultID,string,not_equals,[],Quantification result ID,0.3,llama3.1-8b,proteome_discoverer,constrained_filter,2,benchmark
+Decoy.Peptides.Matched,numeric,greater_than,> 0,Decoy peptides matched,0.9,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+Peptides.Matched,numeric,greater_than,5,Peptides matched,0.8,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+Missed.Cleavages,numeric,equals,0,Missed cleavages,0.8,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+Isolation.Interference,numeric,less_than,10,Isolation interference,0.7,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+Ion.Inject.Time.ms,numeric,less_than,5,Ion inject time,0.7,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+Exp.Value,numeric,greater_than,0.01,Expected value,0.6,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+Homology.Threshold,numeric,greater_than,10,Homology threshold,0.5,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+Identity.High,numeric,greater_than,10,Identity high,0.5,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+Identity.Middle,numeric,greater_than,10,Identity middle,0.5,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+IonScore,numeric,greater_than,20,Ion score,0.4,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+QuanResultID,string,not_equals,[],Quantification result ID,0.3,llama3.1-8b,proteome_discoverer,constrained_filter,3,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Remove decoy peptides,0.9,llama3.1-8b,metamorpheus,filter_aware,1,benchmark
+Random.RT,boolean,equals,FALSE,Remove random RT features,0.9,llama3.1-8b,metamorpheus,filter_aware,1,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Remove decoy peptides,0.9,llama3.1-8b,metamorpheus,filter_aware,2,benchmark
+Random.RT,boolean,equals,FALSE,Remove random RT features,0.9,llama3.1-8b,metamorpheus,filter_aware,2,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Remove decoy peptides,0.9,llama3.1-8b,metamorpheus,filter_aware,3,benchmark
+Random.RT,boolean,equals,FALSE,Remove random RT features,0.9,llama3.1-8b,metamorpheus,filter_aware,3,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Decoy peptide filter,0.9,llama3.1-8b,metamorpheus,constrained_filter,1,benchmark
+Random.RT,boolean,equals,FALSE,Random RT filter,0.9,llama3.1-8b,metamorpheus,constrained_filter,1,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Decoy peptide filter,0.9,llama3.1-8b,metamorpheus,constrained_filter,2,benchmark
+Random.RT,boolean,equals,FALSE,Random RT filter,0.9,llama3.1-8b,metamorpheus,constrained_filter,2,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Decoy peptide filter,0.9,llama3.1-8b,metamorpheus,constrained_filter,3,benchmark
+Random.RT,boolean,equals,FALSE,Random RT filter,0.9,llama3.1-8b,metamorpheus,constrained_filter,3,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification.,0.9,deepseek-r1-14b,spectronaut,filter_aware,1,benchmark
+F.FrgLossType,string,equals,noloss,Keep only fragments with no loss.,0.8,deepseek-r1-14b,spectronaut,filter_aware,1,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification.,0.9,deepseek-r1-14b,spectronaut,filter_aware,2,benchmark
+F.FrgLossType,string,equals,noloss,Keep only fragments with no loss.,0.8,deepseek-r1-14b,spectronaut,filter_aware,2,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification.,0.9,deepseek-r1-14b,spectronaut,filter_aware,3,benchmark
+F.FrgLossType,string,equals,noloss,Keep only fragments with no loss.,0.8,deepseek-r1-14b,spectronaut,filter_aware,3,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.98,deepseek-r1-14b,spectronaut,constrained_filter,1,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.98,deepseek-r1-14b,spectronaut,constrained_filter,2,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Filter out features excluded from quantification to ensure only reliable data is analyzed.,0.98,deepseek-r1-14b,spectronaut,constrained_filter,3,benchmark
+Annotation,string,not_contains,"",Filter out rows where Annotation is empty or indicates a decoy.,0.7,deepseek-r1-14b,proteome_discoverer,filter_aware,1,benchmark
+Decoy.Peptides.Matched,numeric,less_than,0,"Filter out rows where Decoy.Peptides.Matched is greater than 0, indicating potential decoy matches.",0.6,deepseek-r1-14b,proteome_discoverer,filter_aware,1,benchmark
+IonScore,numeric,greater_than,20,"Filter out rows where IonScore is below a certain threshold, indicating low confidence identifications.",0.7,deepseek-r1-14b,proteome_discoverer,filter_aware,1,benchmark
+Annotation,string,not_contains,"",Filter out rows where Annotation is empty or indicates a decoy.,0.7,deepseek-r1-14b,proteome_discoverer,filter_aware,2,benchmark
+Decoy.Peptides.Matched,numeric,less_than,0,"Filter out rows where Decoy.Peptides.Matched is greater than 0, indicating potential decoy matches.",0.6,deepseek-r1-14b,proteome_discoverer,filter_aware,2,benchmark
+IonScore,numeric,greater_than,20,"Filter out rows where IonScore is below a certain threshold, indicating low confidence identifications.",0.7,deepseek-r1-14b,proteome_discoverer,filter_aware,2,benchmark
+Annotation,string,not_contains,"",Filter out rows where Annotation is empty or indicates a decoy.,0.7,deepseek-r1-14b,proteome_discoverer,filter_aware,3,benchmark
+Decoy.Peptides.Matched,numeric,less_than,0,"Filter out rows where Decoy.Peptides.Matched is greater than 0, indicating potential decoy matches.",0.6,deepseek-r1-14b,proteome_discoverer,filter_aware,3,benchmark
+IonScore,numeric,greater_than,20,"Filter out rows where IonScore is below a certain threshold, indicating low confidence identifications.",0.7,deepseek-r1-14b,proteome_discoverer,filter_aware,3,benchmark
+Decoy.Peptides.Matched,numeric,equals,0,Filter out decoy peptides to ensure only true positives are considered.,0.92,deepseek-r1-14b,proteome_discoverer,constrained_filter,1,benchmark
+IonScore,numeric,greater_than,20,Features with low IonScore may indicate lower confidence in identification.,0.8,deepseek-r1-14b,proteome_discoverer,constrained_filter,1,benchmark
+Modifications,string,not_contains,UnwantedModification,Filter out features with unexpected modifications to ensure consistency.,0.8,deepseek-r1-14b,proteome_discoverer,constrained_filter,1,benchmark
+Decoy.Peptides.Matched,numeric,equals,0,Filter out decoy peptides to ensure only true positives are considered.,0.92,deepseek-r1-14b,proteome_discoverer,constrained_filter,2,benchmark
+IonScore,numeric,greater_than,20,Features with low IonScore may indicate lower confidence in identification.,0.8,deepseek-r1-14b,proteome_discoverer,constrained_filter,2,benchmark
+Modifications,string,not_contains,UnwantedModification,Filter out features with unexpected modifications to ensure consistency.,0.8,deepseek-r1-14b,proteome_discoverer,constrained_filter,2,benchmark
+Decoy.Peptides.Matched,numeric,equals,0,Filter out decoy peptides to ensure only true positives are considered.,0.92,deepseek-r1-14b,proteome_discoverer,constrained_filter,3,benchmark
+IonScore,numeric,greater_than,20,Features with low IonScore may indicate lower confidence in identification.,0.8,deepseek-r1-14b,proteome_discoverer,constrained_filter,3,benchmark
+Modifications,string,not_contains,UnwantedModification,Filter out features with unexpected modifications to ensure consistency.,0.8,deepseek-r1-14b,proteome_discoverer,constrained_filter,3,benchmark
+Decoy.Peptide,string,equals,FALSE,Filter out decoy peptides to ensure only true positives are included.,1,deepseek-r1-14b,metamorpheus,filter_aware,1,benchmark
+Random.RT,string,equals,FALSE,Filter out peptides with random retention times to ensure data integrity.,1,deepseek-r1-14b,metamorpheus,filter_aware,1,benchmark
+Decoy.Peptide,string,equals,FALSE,Filter out decoy peptides to ensure only true positives are included.,1,deepseek-r1-14b,metamorpheus,filter_aware,2,benchmark
+Random.RT,string,equals,FALSE,Filter out peptides with random retention times to ensure data integrity.,1,deepseek-r1-14b,metamorpheus,filter_aware,2,benchmark
+Decoy.Peptide,string,equals,FALSE,Filter out decoy peptides to ensure only true positives are included.,1,deepseek-r1-14b,metamorpheus,filter_aware,3,benchmark
+Random.RT,string,equals,FALSE,Filter out peptides with random retention times to ensure data integrity.,1,deepseek-r1-14b,metamorpheus,filter_aware,3,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Filter out decoy peptides to ensure only true positives are considered.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,1,benchmark
+Random.RT,boolean,equals,FALSE,Filter out random retention time assignments to avoid noise.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,1,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Filter out decoy peptides to ensure only true positives are considered.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,2,benchmark
+Random.RT,boolean,equals,FALSE,Filter out random retention time assignments to avoid noise.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,2,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Filter out decoy peptides to ensure only true positives are considered.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,3,benchmark
+Random.RT,boolean,equals,FALSE,Filter out random retention time assignments to avoid noise.,0.98,deepseek-r1-14b,metamorpheus,constrained_filter,3,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,"Removes fragment ions flagged as excluded from quantification by Spectronaut, ensuring only valid quantifiable fragments are used.",0.9,claude-sonnet,spectronaut,filter_aware,1,benchmark
+F.FrgLossType,string,equals,noloss,"Keeps only fragment ions without neutral loss, which are typically more reliable for quantification.",0.7,claude-sonnet,spectronaut,filter_aware,1,benchmark
+PG.Qvalue,numeric,less_than,0.01,"Protein-group level q-value filter to ensure confident protein identification, complementary to the precursor-level EG.Qvalue used as the MSstats Qvalue field.",0.5,claude-sonnet,spectronaut,filter_aware,1,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Exclude fragments flagged as excluded from quantification to retain only valid quant signals,0.9,claude-sonnet,spectronaut,filter_aware,2,benchmark
+F.FrgLossType,string,equals,noloss,Keep only fragment ions without neutral loss for cleaner quantification signal,0.75,claude-sonnet,spectronaut,filter_aware,2,benchmark
+PG.Qvalue,numeric,less_than,0.01,"Filter protein groups by q-value threshold to ensure protein-level confidence, complementary to precursor-level EG.Qvalue",0.5,claude-sonnet,spectronaut,filter_aware,2,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Remove fragment ions flagged as excluded from quantification by Spectronaut.,0.9,claude-sonnet,spectronaut,filter_aware,3,benchmark
+F.FrgLossType,string,equals,noloss,Keep only fragment ions with no neutral loss for more reliable quantification.,0.7,claude-sonnet,spectronaut,filter_aware,3,benchmark
+PG.Qvalue,numeric,less_than,0.01,"Protein group level q-value filter to ensure confident protein identifications, complementary to precursor-level EG.Qvalue used as MSstats Qvalue field.",0.5,claude-sonnet,spectronaut,filter_aware,3,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Remove fragment-level features flagged as excluded from quantification,0.95,claude-sonnet,spectronaut,constrained_filter,1,benchmark
+F.FrgLossType,string,equals,noloss,Keep only fragments without neutral loss for reliable quantification,0.9,claude-sonnet,spectronaut,constrained_filter,1,benchmark
+PG.Qvalue,numeric,less_than_or_equals,0.01,Protein group-level q-value threshold to control false discovery rate at protein level,0.6,claude-sonnet,spectronaut,constrained_filter,1,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Remove features flagged as excluded from quantification,0.95,claude-sonnet,spectronaut,constrained_filter,2,benchmark
+F.FrgLossType,string,equals,noloss,Keep only fragments with no neutral loss for more reliable quantification,0.85,claude-sonnet,spectronaut,constrained_filter,2,benchmark
+PG.Qvalue,numeric,less_than_or_equals,0.01,Protein-group level q-value threshold to control FDR at protein level,0.6,claude-sonnet,spectronaut,constrained_filter,2,benchmark
+F.ExcludedFromQuantification,boolean,equals,FALSE,Remove features flagged as excluded from quantification,0.95,claude-sonnet,spectronaut,constrained_filter,3,benchmark
+F.FrgLossType,string,equals,noloss,Keep only fragments with no neutral loss for reliable quantification,0.85,claude-sonnet,spectronaut,constrained_filter,3,benchmark
+PG.Qvalue,numeric,less_than_or_equals,0.01,Filter protein groups by q-value threshold to control false discovery rate at protein level,0.6,claude-sonnet,spectronaut,constrained_filter,3,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,Keep only unambiguous peptide-spectrum matches to ensure confident identification,0.7,claude-sonnet,proteome_discoverer,filter_aware,1,benchmark
+Confidence.Level,string,equals,High,Retain only high-confidence identifications as classified by the search engine,0.75,claude-sonnet,proteome_discoverer,filter_aware,1,benchmark
+Search.Engine.Rank,numeric,equals,1,Keep only the top-ranked peptide match per spectrum to avoid redundant/inferior matches,0.6,claude-sonnet,proteome_discoverer,filter_aware,1,benchmark
+Isolation.Interference,numeric,less_than,30,Filter out spectra with high isolation interference which can compromise quantification accuracy,0.4,claude-sonnet,proteome_discoverer,filter_aware,1,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,Keep only unambiguous peptide-spectrum matches to ensure confident identifications,0.7,claude-sonnet,proteome_discoverer,filter_aware,2,benchmark
+Confidence.Level,string,equals,High,Retain only high-confidence identifications as classified by the search engine,0.65,claude-sonnet,proteome_discoverer,filter_aware,2,benchmark
+Search.Engine.Rank,numeric,equals,1,Keep only the top-ranked PSM per spectrum to avoid duplicate/competing identifications,0.6,claude-sonnet,proteome_discoverer,filter_aware,2,benchmark
+Decoy.Peptides.Matched,numeric,equals,0,Exclude PSMs matching decoy peptides to remove false positives (if used as a decoy count flag),0.3,claude-sonnet,proteome_discoverer,filter_aware,2,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,Keep only unambiguous peptide-spectrum matches to ensure confident identifications,0.7,claude-sonnet,proteome_discoverer,filter_aware,3,benchmark
+Confidence.Level,string,equals,High,Retain only high-confidence identifications as determined by the search engine,0.65,claude-sonnet,proteome_discoverer,filter_aware,3,benchmark
+Rank,numeric,equals,1,Keep only top-ranked PSM per spectrum to avoid duplicate/ambiguous assignments,0.5,claude-sonnet,proteome_discoverer,filter_aware,3,benchmark
+Search.Engine.Rank,numeric,equals,1,Keep only the best search engine rank match for each spectrum,0.45,claude-sonnet,proteome_discoverer,filter_aware,3,benchmark
+Isolation.Interference,numeric,less_than,30,Filter out spectra with high isolation interference which can compromise quantification accuracy,0.3,claude-sonnet,proteome_discoverer,filter_aware,3,benchmark
+Exp.Value,numeric,less_than,0.01,Expectation value (PEP-like score) threshold to filter low-confidence PSMs,0.6,claude-sonnet,proteome_discoverer,constrained_filter,1,benchmark
+Confidence.Level,string,equals,High,Keep only high-confidence PSM identifications,0.75,claude-sonnet,proteome_discoverer,constrained_filter,1,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,Remove ambiguous peptide-spectrum matches to ensure unique identifications,0.7,claude-sonnet,proteome_discoverer,constrained_filter,1,benchmark
+Decoy.Peptides.Matched,numeric,equals,0,Exclude PSMs matching decoy peptides to control false discovery rate,0.5,claude-sonnet,proteome_discoverer,constrained_filter,1,benchmark
+Search.Engine.Rank,numeric,equals,1,Keep only top-ranked search engine hits per spectrum,0.55,claude-sonnet,proteome_discoverer,constrained_filter,1,benchmark
+Confidence.Level,string,equals,High,Keep only high-confidence PSMs; filters out low-confidence identifications,0.7,claude-sonnet,proteome_discoverer,constrained_filter,2,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,"Keep only unambiguous peptide-spectrum matches, removing ambiguous assignments",0.75,claude-sonnet,proteome_discoverer,constrained_filter,2,benchmark
+Exp.Value,numeric,less_than,0.01,Expectation value (E-value) threshold from search engine; lower values indicate higher confidence matches,0.6,claude-sonnet,proteome_discoverer,constrained_filter,2,benchmark
+Search.Engine.Rank,numeric,equals,1,Keep only top-ranked PSM per spectrum to avoid redundant/lower-confidence matches,0.65,claude-sonnet,proteome_discoverer,constrained_filter,2,benchmark
+Decoy.Peptides.Matched,numeric,equals,0,Column relating to decoy peptide matches; may indicate contamination from decoy database hits that should be excluded,0.4,claude-sonnet,proteome_discoverer,constrained_filter,2,benchmark
+Isolation.Interference,numeric,less_than,30,High isolation interference indicates co-eluting peptides contaminating the precursor signal; filtering improves quantification accuracy,0.5,claude-sonnet,proteome_discoverer,constrained_filter,2,benchmark
+Exp.Value,numeric,less_than,0.01,"Expectation value (E-value) threshold; lower values indicate higher confidence PSMs, commonly used to filter low-confidence identifications.",0.6,claude-sonnet,proteome_discoverer,constrained_filter,3,benchmark
+Confidence.Level,string,equals,High,Proteome Discoverer confidence level flag; retaining only 'High' confidence PSMs filters out unreliable identifications.,0.75,claude-sonnet,proteome_discoverer,constrained_filter,3,benchmark
+PSM.Ambiguity,string,equals,Unambiguous,"Filters out ambiguous peptide-spectrum matches, keeping only unambiguous assignments for reliable quantification.",0.7,claude-sonnet,proteome_discoverer,constrained_filter,3,benchmark
+Decoy.Peptides.Matched,numeric,equals,0,Indicates decoy peptide matches; rows with decoy matches may represent false positives and should be excluded or used for FDR filtering.,0.4,claude-sonnet,proteome_discoverer,constrained_filter,3,benchmark
+Search.Engine.Rank,numeric,equals,1,"Keeps only the top-ranked PSM per spectrum, removing lower-confidence alternative matches.",0.55,claude-sonnet,proteome_discoverer,constrained_filter,3,benchmark
+Decoy.Peptide,boolean,equals,FALSE,"Remove decoy peptide hits used for FDR estimation, which should not be included in downstream quantification.",0.95,claude-sonnet,metamorpheus,filter_aware,1,benchmark
+Random.RT,boolean,equals,FALSE,"Remove entries flagged as random retention time matches, which likely represent false positive identifications.",0.75,claude-sonnet,metamorpheus,filter_aware,1,benchmark
+Peak.Detection.Type,string,equals,MSMS,"Keep only peaks confirmed by MS/MS detection rather than inferred/match-between-runs peaks, ensuring higher confidence quantification.",0.5,claude-sonnet,metamorpheus,filter_aware,1,benchmark
+PIP.PEP,numeric,less_than,0.05,Posterior error probability threshold to filter out low-confidence peptide identifications.,0.4,claude-sonnet,metamorpheus,filter_aware,1,benchmark
+Decoy.Peptide,boolean,equals,FALSE,"Removes decoy peptide matches from reverse database search, which should not be included in quantitative analysis",0.95,claude-sonnet,metamorpheus,filter_aware,2,benchmark
+Random.RT,boolean,equals,FALSE,"Removes matches flagged as having a random/implausible retention time, indicating a likely false positive identification",0.75,claude-sonnet,metamorpheus,filter_aware,2,benchmark
+Peak.Detection.Type,string,equals,MSMS,"Retains only peaks directly confirmed by MS/MS identification rather than inferred by matching-between-runs, improving confidence in quantification",0.5,claude-sonnet,metamorpheus,filter_aware,2,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Removes decoy peptide hits to retain only target identifications,0.95,claude-sonnet,metamorpheus,filter_aware,3,benchmark
+Random.RT,boolean,equals,FALSE,"Excludes features flagged with random/implausible retention time matches, likely false positives",0.7,claude-sonnet,metamorpheus,filter_aware,3,benchmark
+Peak.Detection.Type,string,equals,MSMS,"Keeps only peaks directly detected via MS2 identification rather than match-between-runs or other inference, ensuring higher confidence quantification",0.5,claude-sonnet,metamorpheus,filter_aware,3,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Remove decoy peptide hits (reverse/decoy sequences) prior to quantification,0.95,claude-sonnet,metamorpheus,constrained_filter,1,benchmark
+Random.RT,boolean,equals,FALSE,"Exclude features flagged as random/incorrect retention time matches, likely indicating false positive identifications",0.8,claude-sonnet,metamorpheus,constrained_filter,1,benchmark
+PIP.PEP,numeric,less_than,0.01,Posterior error probability threshold to filter low-confidence peptide identifications,0.75,claude-sonnet,metamorpheus,constrained_filter,1,benchmark
+Peak.Detection.Type,string,equals,MSMS,"Keep only peaks with direct MS/MS-based detection rather than inferred/matched-between-runs peaks, for higher confidence quantification",0.6,claude-sonnet,metamorpheus,constrained_filter,1,benchmark
+Decoy.Peptide,boolean,equals,FALSE,"Exclude decoy peptide matches used for FDR estimation, keeping only target identifications",0.95,claude-sonnet,metamorpheus,constrained_filter,2,benchmark
+Random.RT,boolean,equals,FALSE,Exclude features flagged as random/noise retention time matches to ensure quantification quality,0.75,claude-sonnet,metamorpheus,constrained_filter,2,benchmark
+PIP.PEP,numeric,less_than,0.01,Posterior error probability threshold to filter low-confidence peptide identifications,0.6,claude-sonnet,metamorpheus,constrained_filter,2,benchmark
+Peak.Detection.Type,string,equals,MSMS,"Keep only features directly identified by MS/MS detection rather than inferred/matched-between-runs peaks, for higher confidence quantification",0.5,claude-sonnet,metamorpheus,constrained_filter,2,benchmark
+Decoy.Peptide,boolean,equals,FALSE,Exclude decoy peptide hits used for FDR estimation,0.95,claude-sonnet,metamorpheus,constrained_filter,3,benchmark
+Random.RT,boolean,equals,FALSE,Exclude features flagged as random/false RT matches,0.7,claude-sonnet,metamorpheus,constrained_filter,3,benchmark
+PIP.PEP,numeric,less_than,0.01,Filter on posterior error probability to retain high-confidence PSMs,0.6,claude-sonnet,metamorpheus,constrained_filter,3,benchmark
+Peak.Detection.Type,string,equals,MSMS,"Keep only MS/MS-based peak detections, excluding match-between-runs or other inferred detections",0.5,claude-sonnet,metamorpheus,constrained_filter,3,benchmark

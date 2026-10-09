@@ -65,6 +65,7 @@ create_chat <- function(model_key) {
 #' @param acquisition `"DIA"`, `"DDA"`, or `NULL` to let the model guess.
 #' @param allow_transforms Enable packed-column transform detection.
 #' @param n_preview Number of rows to include in the data preview.
+#' @param source `"fixture"` or `"benchmark"`, passed to [load_test_dataset()].
 #' @param use_structured Use `chat_structured()` (`TRUE`) or raw `chat()`
 #'   (`FALSE`).
 #' @return A list with `model`, `tool`, `prompt`, `mapping` (parsed),
@@ -76,10 +77,11 @@ run_trial <- function(model_key,
                       acquisition = NULL,
                       allow_transforms = FALSE,
                       n_preview  = 3,
-                      use_structured = TRUE) {
+                      use_structured = TRUE,
+                      source = "fixture") {
   
   # Load data and build prompt
-  df <- load_test_dataset(tool_name)
+  df <- load_test_dataset(tool_name, source = source)
   preview <- make_json_preview(df, n_rows = n_preview)
   system_prompt <- PROMPT_VERSIONS[[prompt_key]]
   user_prompt   <- build_user_prompt(preview, acquisition = acquisition,

@@ -155,42 +155,78 @@ TOOL_TRANSFORMS <- list(
 # 4. Test dataset loader
 # ------------------------------------------------------------------
 
+#' Directory holding the deposited benchmark datasets
+#'
+#' Holds the files named in the Experimental Datasets table, truncated to
+#' their first rows. The model sees a three-row preview, so the truncation
+#' does not change its input. Override with the `MSSTATS_BENCHMARK_DATA`
+#' environment variable.
+#'
+#' @export
+BENCHMARK_DATA_DIR <- Sys.getenv("MSSTATS_BENCHMARK_DATA", "benchmark_data")
+
 #' Load a registered benchmark test dataset
 #'
-#' Reads a proteomics tool's example output (bundled with `MSstatsConvert`) and
-#' normalizes its column headers.
+#' Reads a proteomics tool's output and normalizes its column headers. Two
+#' sources are available: the example files bundled with `MSstatsConvert`,
+#' and the deposited datasets reported in the paper.
 #'
 #' @param tool_name Character key, one of the tools registered in the function
 #'   body (e.g. `"spectronaut"`, `"proteome_discoverer"`, `"metamorpheus"`,
 #'   `"diann"`).
+#' @param source `"fixture"` for the `MSstatsConvert` example files,
+#'   `"benchmark"` for the deposited datasets in [BENCHMARK_DATA_DIR].
 #' @return A `data.table` of the raw tool output with normalized headers.
 #' @export
-load_test_dataset <- function(tool_name) {
-  paths <- list(
-    spectronaut = system.file(
-      "tinytest/raw_data/Spectronaut/spectronaut_input.csv",
-      package = "MSstatsConvert"
+load_test_dataset <- function(tool_name, source = c("fixture", "benchmark")) {
+  source <- match.arg(source)
+
+  paths <- switch(
+    source,
+    fixture = list(
+      spectronaut = system.file(
+        "tinytest/raw_data/Spectronaut/spectronaut_input.csv",
+        package = "MSstatsConvert"
+      ),
+      proteome_discoverer = system.file(
+        "tinytest/raw_data/PD/pd_input.csv",
+        package = "MSstatsConvert"
+      ),
+      metamorpheus = system.file(
+        "tinytest/raw_data/Metamorpheus/QuantifiedPeaks.tsv",
+        package = "MSstatsConvert"
+      ),
+      diann = system.file(
+        "tinytest/raw_data/DIANN/diann_input.tsv",
+        package = "MSstatsConvert"
+      )
     ),
-    proteome_discoverer = system.file(
-      "tinytest/raw_data/PD/pd_input.csv",
-      package = "MSstatsConvert"
-    ),
-    metamorpheus = system.file(
-      "tinytest/raw_data/Metamorpheus/QuantifiedPeaks.tsv",
-      package = "MSstatsConvert"
-    ),
-    diann = system.file(
-      "tinytest/raw_data/DIANN/diann_input.tsv",
-      package = "MSstatsConvert"
+    benchmark = list(
+      spectronaut = file.path(
+        BENCHMARK_DATA_DIR, "Puyvelde2022_Spectronaut_Report-001.tsv"
+      ),
+      proteome_discoverer = file.path(
+        BENCHMARK_DATA_DIR, "PXD005642_PD_input.csv"
+      ),
+      metamorpheus = file.path(
+        BENCHMARK_DATA_DIR, "Solivais2024_QuantifiedPeaks.tsv"
+      )
     )
   )
-  
+
   path <- paths[[tool_name]]
   if (is.null(path) || !nzchar(path)) {
-    stop("No test data registered for tool: ", tool_name,
+    stop("No ", source, " data registered for tool: ", tool_name,
          "\nAvailable: ", paste(names(paths), collapse = ", "))
   }
-  
+  if (!file.exists(path)) {
+    stop("File not found: ", path,
+         if (source == "benchmark") {
+           paste0("\nSet MSSTATS_BENCHMARK_DATA, or run from the repository ",
+                  "root where benchmark_data/ lives.")
+         } else "")
+  }
+
   normalize_headers(data.table::fread(path))
 }
 
