@@ -2,9 +2,10 @@
 # run_all.R — Full benchmark matrix
 #
 # Usage:
-#   Rscript run_all.R                  # run everything
+#   Rscript run_all.R                      # fixtures, everything
+#   Rscript run_all.R --source benchmark   # deposited datasets
 #   Rscript run_all.R --models llama3.1-8b --tools spectronaut
-#   Rscript run_all.R --tools spectronaut,proteome_discoverer,metamorpheus,diann
+#   Rscript run_all.R --tools spectronaut,proteome_discoverer,metamorpheus
 #
 # Install the package first (devtools::install(".")) or, during
 # development, replace library() with devtools::load_all(".").
@@ -34,12 +35,17 @@ selected_tools   <- parse_flag("--tools",   PAPER_TOOLS)
 selected_prompts <- parse_flag("--prompts", names(PROMPT_VERSIONS))
 n_reps           <- as.integer(parse_flag("--reps", "3"))
 
+# "fixture" uses the example files bundled with MSstatsConvert; "benchmark"
+# uses the deposited datasets in benchmark_data/.
+selected_source  <- parse_flag("--source", "fixture")
+
 cat("========================================\n")
 cat("LLM-MSstats Schema Inference Benchmark\n")
 cat("========================================\n")
 cat("Models:  ", paste(selected_models, collapse = ", "), "\n")
 cat("Tools:   ", paste(selected_tools, collapse = ", "), "\n")
 cat("Prompts: ", paste(selected_prompts, collapse = ", "), "\n")
+cat("Source:  ", selected_source, "\n")
 cat("Reps:    ", n_reps, "\n")
 cat("Total trials:", length(selected_models) * length(selected_tools) *
       length(selected_prompts) * n_reps, "\n")
@@ -51,12 +57,16 @@ cat("========================================\n\n")
 # Scores are appended after every trial rather than held in memory until the
 # end. A full matrix is hours long, and a dropped tunnel used to cost the
 # entire run.
+#
+# The source is part of the file name so a benchmark run never overwrites a
+# fixture run, and the two can be told apart later.
 # ------------------------------------------------------------------
 outdir <- "results"
 dir.create(outdir, showWarnings = FALSE)
 
 timestamp   <- format(Sys.time(), "%Y%m%d_%H%M%S")
-scores_path <- file.path(outdir, paste0("field_scores_", timestamp, ".csv"))
+tag         <- paste0(selected_source, "_", timestamp)
+scores_path <- file.path(outdir, paste0("field_scores_", tag, ".csv"))
 
 cat("Appending scores to:", scores_path, "\n\n")
 
@@ -76,7 +86,8 @@ for (model_key in selected_models) {
   warm <- tryCatch({
     run_trial(model_key, selected_tools[1], selected_prompts[1],
               acquisition = TOOL_ACQUISITION[[selected_tools[1]]],
-              allow_transforms = isTRUE(TOOL_TRANSFORMS[[selected_tools[1]]]))
+              allow_transforms = isTRUE(TOOL_TRANSFORMS[[selected_tools[1]]]),
+              source = selected_source)
   }, error = function(e) NULL)
   cat(if (is.null(warm)) "failed\n\n" else sprintf("%.1fs\n\n", warm$elapsed_sec))
 
@@ -91,7 +102,8 @@ for (model_key in selected_models) {
       tryCatch(
         run_trial(model_key, tool_name, prompt_key,
                   acquisition = TOOL_ACQUISITION[[tool_name]],
-                  allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool_name]])),
+                  allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool_name]]),
+                  source = selected_source),
         error = function(e) NULL)
 
       for (rep in seq_len(n_reps)) {
@@ -102,7 +114,8 @@ for (model_key in selected_models) {
         trial <- tryCatch(
           run_trial(model_key, tool_name, prompt_key,
                     acquisition = TOOL_ACQUISITION[[tool_name]],
-                    allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool_name]])),
+                    allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool_name]]),
+                    source = selected_source),
           error = function(e) {
             message("FAILED: ", e$message)
             list(
@@ -130,6 +143,7 @@ for (model_key in selected_models) {
         
         scores[, `:=`(model = model_key, tool = tool_name,
                       prompt = prompt_key, rep = rep,
+                      source = selected_source,
                       elapsed_sec = trial$elapsed_sec)]
         
         print_scorecard(scores, trial)
@@ -137,7 +151,7 @@ for (model_key in selected_models) {
         # Crash-safe: on disk before the next trial starts.
         fwrite(scores, scores_path, append = file.exists(scores_path))
         
-        all_results[[idx]] <- c(trial, list(rep = rep))
+        all_results[[idx]] <- c(trial, list(rep = rep, source = selected_source))
         all_scores[[idx]]  <- scores
       }
     }
@@ -157,7 +171,7 @@ summary_dt <- results_dt[, .(
   mean_conf           = mean(confidence, na.rm = TRUE),
   mean_time_sec       = mean(elapsed_sec, na.rm = TRUE),
   n_trials            = .N / length(MSSTATS_FIELDS)
-), by = .(model, tool, prompt)]
+), by = .(model, tool, prompt, source)]
 
 cat("\n\n")
 cat(strrep("=", 70), "\n")
@@ -165,12 +179,12 @@ cat("SUMMARY\n")
 cat(strrep("=", 70), "\n")
 print(summary_dt)
 
-fwrite(summary_dt, file.path(outdir, paste0("summary_", timestamp, ".csv")))
+fwrite(summary_dt, file.path(outdir, paste0("summary_", tag, ".csv")))
 
 # Save raw LLM outputs first. Filter parsing below depends on the model
 # returning well-formed objects, which it does not always do; if that throws,
 # the raw trials are already on disk.
-saveRDS(all_results, file.path(outdir, paste0("raw_trials_", timestamp, ".rds")))
+saveRDS(all_results, file.path(outdir, paste0("raw_trials_", tag, ".rds")))
 
 # Extract filter results from trials that used filter-aware prompts
 filter_rows <- list()
@@ -190,12 +204,13 @@ for (trial in all_results) {
       fl$tool   <- trial$tool
       fl$prompt <- trial$prompt
       fl$rep    <- trial_rep
+      fl$source <- selected_source
       filter_rows[[length(filter_rows) + 1]] <- fl
     } else if (is.list(fl) && length(fl) > 0) {
       for (f in fl) {
         filter_rows[[length(filter_rows) + 1]] <- data.table(
           model = trial$model, tool = trial$tool, prompt = trial$prompt,
-          rep = trial_rep,
+          rep = trial_rep, source = selected_source,
           column = fget(f, "column"), dtype = fget(f, "dtype"),
           operation = fget(f, "operation"), value = fget(f, "value"),
           description = fget(f, "description"),
@@ -207,11 +222,11 @@ for (trial in all_results) {
 }
 if (length(filter_rows) > 0) {
   filters_dt <- rbindlist(filter_rows, fill = TRUE)
-  fwrite(filters_dt, file.path(outdir, paste0("filters_", timestamp, ".csv")))
-  cat("  filters_",     timestamp, ".csv  (LLM-suggested filters)\n")
+  fwrite(filters_dt, file.path(outdir, paste0("filters_", tag, ".csv")))
+  cat("  filters_",     tag, ".csv  (LLM-suggested filters)\n")
 }
 
 cat("\nResults saved to: ", outdir, "/\n")
-cat("  field_scores_", timestamp, ".csv  (per-field detail)\n")
-cat("  summary_",      timestamp, ".csv  (aggregate)\n")
-cat("  raw_trials_",   timestamp, ".rds  (full LLM outputs)\n")
+cat("  field_scores_", tag, ".csv  (per-field detail)\n")
+cat("  summary_",      tag, ".csv  (aggregate)\n")
+cat("  raw_trials_",   tag, ".rds  (full LLM outputs)\n")
