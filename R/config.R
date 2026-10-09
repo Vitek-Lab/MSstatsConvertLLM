@@ -30,6 +30,11 @@ MODEL_REGISTRY <- list(
     provider = "ollama",
     model    = "deepseek-r1:14b",
     label    = "DeepSeek-R1 14B"
+  ),
+  "claude-sonnet" = list(
+    provider = "anthropic",
+    model    = "claude-sonnet-5",
+    label    = "Claude Sonnet 5"
   )
 )
 
@@ -78,7 +83,7 @@ GROUND_TRUTH <- list(
     Run             = "R.FileName",
     Intensity       = c("F.PeakArea", "F.NormalizedPeakArea", 
                         "F.PeakHeight", "F.NormalizedPeakHeight"),
-    Qvalue          = c("EG.Qvalue", "PG.Qvalue")
+    Qvalue          = "EG.Qvalue"
   ),
   proteome_discoverer = list(
     ProteinName     = "Protein.Group.Accessions",

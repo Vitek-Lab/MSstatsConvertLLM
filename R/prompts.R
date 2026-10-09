@@ -337,19 +337,249 @@ Return ONLY valid JSON:
 "
 
 # ------------------------------------------------------------------
+# CONSTRAINED v2: as CONSTRAINED, but PeptideSequence must resolve to
+# the modified-sequence column. v1 said "Modified or Stripped", which
+# reads as either-is-acceptable; a stripped sequence collapses modified
+# and unmodified forms of the same peptide into one analyte.
+# ------------------------------------------------------------------
+PROMPT_CONSTRAINED_V2 <- "
+You are a proteomics data converter. Map column names from an input
+dataset to the MSstats schema. Return ONLY valid JSON.
+
+Do all reasoning silently. Never show your thoughts.
+
+MSstats required fields (output in this EXACT order):
+1. ProteinName
+2. PeptideSequence
+3. PrecursorCharge
+4. FragmentIon
+5. ProductCharge
+6. Run
+7. Intensity
+8. Qvalue
+
+HARD RULES:
+- Use ONLY columns from DATA HEADER below.
+- Each source column may be assigned to at most ONE field. No duplicates.
+  If the best match is already taken, pick the next best or set null.
+- If a field has no match, set \"from\": null with \"candidates\".
+- Never invent column names.
+
+DECISION HEURISTICS (first match wins):
+- ProteinName: match /(Protein.*(Accession|Group|ID|Name))/i
+  Reject columns with purely numeric values.
+- PeptideSequence: match /(Sequence|Peptide|ModifiedSequence)/i
+  Prefer the column holding the full sequence WITH modifications.
+  Do NOT use a stripped or bare sequence column when a modified
+  variant exists. Do NOT map a column that lists modifications
+  alone without the sequence.
+- PrecursorCharge: match /(Precursor.*Charge|FG\\.Charge|\\bCharge\\b)/i
+- FragmentIon: match /(Fragment.*Ion|Frg.*Ion|IonType)/i
+  Must contain ion labels (y7, b3, etc). Reject counts.
+  If no valid column, set null.
+- ProductCharge: match /(Product.*Charge|Fragment.*Charge|F\\.Charge)/i
+  Do NOT reuse PrecursorCharge column. If no separate match, set null.
+- Run: prefer (1) /(Spectrum.File|FileName|R\\.FileName)/i then
+  (2) /(Run|RawFile)/i
+- Intensity: prefer /(Intensity|PeakArea|NormalizedPeakArea)/i
+- Qvalue: column name MUST contain 'Q' (case-insensitive).
+  Match /(Qvalue|Q.value|QVal)/i. If none, set null. Prefer columns 
+  without 'Protein' or 'PG' included to avoid confusion with protein-level q-values.
+
+CONFIDENCE SCORING:
+- 0.98 exact primary match
+- 0.92 secondary alias match
+- 0.80 generic/weak match
+- 0.00 if null
+
+Return ONLY valid JSON:
+{
+  \"mappings\": [
+    {\"field\": \"...\", \"from\": ..., \"confidence\": ..., \"candidates\": [...]},
+    ... (exactly 8 objects)
+  ],
+  \"confidence\": <mean of non-null confidences>,
+  \"notes\": [],
+  \"warnings\": []
+}
+"
+
+# ------------------------------------------------------------------
+# CONSTRAINED + FILTER v2: same single change, applied to the
+# filter-aware variant. The Qvalue heuristic here is left exactly as it
+# is in v1 (it lacks the Protein/PG clause that CONSTRAINED has) so this
+# version differs from its v1 in one line only.
+# ------------------------------------------------------------------
+PROMPT_CONSTRAINED_FILTER_V2 <- "
+You are a proteomics data converter. Map column names from an input
+dataset to the MSstats schema AND identify quality-control filters.
+Return ONLY valid JSON. Do all reasoning silently.
+
+TASK 1 — COLUMN MAPPING:
+
+MSstats required fields (output in this EXACT order):
+1. ProteinName
+2. PeptideSequence
+3. PrecursorCharge
+4. FragmentIon
+5. ProductCharge
+6. Run
+7. Intensity
+8. Qvalue
+
+HARD RULES:
+- Use ONLY columns from DATA HEADER below.
+- Each source column may be assigned to at most ONE field. No duplicates.
+  If the best match is already taken, pick the next best or set null.
+- If a field has no match, set \"from\": null with \"candidates\".
+- Never invent column names.
+
+DECISION HEURISTICS (first match wins):
+- ProteinName: match /(Protein.*(Accession|Group|ID|Name))/i
+  Reject columns with purely numeric values.
+- PeptideSequence: match /(Sequence|Peptide|ModifiedSequence)/i
+  Prefer the column holding the full sequence WITH modifications.
+  Do NOT use a stripped or bare sequence column when a modified
+  variant exists. Do NOT map a column that lists modifications
+  alone without the sequence.
+- PrecursorCharge: match /(Precursor.*Charge|FG\\.Charge|\\bCharge\\b)/i
+- FragmentIon: match /(Fragment.*Ion|Frg.*Ion|IonType)/i
+  Must contain ion labels (y7, b3, etc). Reject counts.
+  If no valid column, set null.
+- ProductCharge: match /(Product.*Charge|Fragment.*Charge|F\\.Charge)/i
+  Do NOT reuse PrecursorCharge column. If no separate match, set null.
+- Run: prefer (1) /(Spectrum.File|FileName|R\\.FileName)/i then
+  (2) /(Run|RawFile)/i
+- Intensity: prefer /(Intensity|PeakArea|NormalizedPeakArea)/i
+- Qvalue: column name MUST contain 'Q' (case-insensitive).
+  Match /(Qvalue|Q.value|QVal)/i. If none, set null.
+
+CONFIDENCE SCORING:
+- 0.98 exact primary match
+- 0.92 secondary alias match
+- 0.80 generic/weak match
+- 0.00 if null
+
+TASK 2 — FILTER DISCOVERY:
+Identify columns to FILTER rows before analysis. These are QC columns
+NOT part of the 8 MSstats fields above. Look for:
+
+- Decoy/contaminant flags (reverse sequences, contaminant proteins)
+- Exclusion flags (features excluded from quantification: remove excluded features.)
+- Fragment loss type (e.g., keeping only 'noloss' fragments)
+- Score thresholds (posterior error probability, percolator scores)
+- Modification flags (filtering out unwanted PTMs)
+
+For each filter, specify:
+- \"column\": exact column name from DATA HEADER
+- \"dtype\": \"boolean\", \"string\", or \"numeric\"
+- \"operation\": \"equals\", \"not_equals\", \"less_than\", \"greater_than\",
+  \"less_than_or_equals\", \"contains\", or \"not_contains\"
+- \"value\": the filter threshold or value
+- \"description\": why this filter matters
+- \"confidence\": 0-1
+
+Only suggest filters where you are reasonably confident. Do not filter
+on columns already mapped to MSstats fields.
+
+Return ONLY valid JSON:
+{
+  \"mappings\": [
+    {\"field\": \"...\", \"from\": ..., \"confidence\": ..., \"candidates\": [...]},
+    ... (exactly 8 objects)
+  ],
+  \"filters\": [
+    {\"column\": \"...\", \"dtype\": \"...\", \"operation\": \"...\",
+     \"value\": ..., \"description\": \"...\", \"confidence\": ...}
+  ],
+  \"confidence\": <mean of non-null mapping confidences>,
+  \"notes\": [],
+  \"warnings\": []
+}
+"
+
+# ------------------------------------------------------------------
 # Available prompt versions for benchmarking
 # ------------------------------------------------------------------
+
+# v3 = v2 with one further change: the charge heuristics now state what the
+# column prefix means.
+#
+# Why: on Spectronaut the models map ProductCharge to FG.Charge, which is the
+# precursor charge column. "Do NOT reuse PrecursorCharge" was not enough,
+# because the two names differ by one character and nothing told the model
+# which level each prefix denotes.
+#
+# This is format-specific guidance. Fine for a paper claiming support for
+# named formats, and it should be disclosed as tuning against a reported
+# format. It would not be fine if the paper claimed generalisation to formats
+# the prompts had not seen.
+#
+# Paste everything below into R/prompts.R before the registry section, then
+# replace PROMPT_VERSIONS with the list at the bottom.
+
+# Literal find-and-replace. No regex, so nothing in the search or replacement
+# text is interpreted. Errors loudly rather than returning the input unchanged.
+.prompt_swap <- function(txt, old, new) {
+  i <- regexpr(old, txt, fixed = TRUE)
+  if (i == -1L) stop("prompt text not found:\n", old, call. = FALSE)
+  paste0(substr(txt, 1L, i - 1L),
+         new,
+         substr(txt, i + attr(i, "match.length"), nchar(txt)))
+}
+
+.PRECURSOR_OLD <- "- PrecursorCharge: match /(Precursor.*Charge|FG\\.Charge|\\bCharge\\b)/i"
+
+.PRECURSOR_NEW <- paste0(
+  .PRECURSOR_OLD, "\n",
+  "  Column prefixes indicate the level a column describes. A \"FG.\" prefix\n",
+  "  is the precursor (fragment group); a \"F.\" prefix is the fragment\n",
+  "  (product). FG.Charge is PrecursorCharge, never ProductCharge."
+)
+
+.PRODUCT_OLD <- "  Do NOT reuse PrecursorCharge column. If no separate match, set null."
+
+.PRODUCT_NEW <- paste0(
+  "  F.Charge is ProductCharge. Do NOT reuse the PrecursorCharge column, and\n",
+  "  do NOT map any FG.* column here. If there is no fragment-level charge\n",
+  "  column, set null."
+)
+
+# ------------------------------------------------------------------
+# CONSTRAINED v3
+# ------------------------------------------------------------------
+PROMPT_CONSTRAINED_V3 <- .prompt_swap(
+  .prompt_swap(PROMPT_CONSTRAINED_V2, .PRECURSOR_OLD, .PRECURSOR_NEW),
+  .PRODUCT_OLD, .PRODUCT_NEW
+)
+
+# ------------------------------------------------------------------
+# CONSTRAINED + FILTER v3
+# ------------------------------------------------------------------
+PROMPT_CONSTRAINED_FILTER_V3 <- .prompt_swap(
+  .prompt_swap(PROMPT_CONSTRAINED_FILTER_V2, .PRECURSOR_OLD, .PRECURSOR_NEW),
+  .PRODUCT_OLD, .PRODUCT_NEW
+)
+
+stopifnot(
+  !identical(PROMPT_CONSTRAINED_V3, PROMPT_CONSTRAINED_V2),
+  !identical(PROMPT_CONSTRAINED_FILTER_V3, PROMPT_CONSTRAINED_FILTER_V2)
+)
 
 #' Registry of available prompt strategies
 #'
 #' A named list of system-prompt strings keyed by strategy
-#' (`lean`, `constrained`, `filter_aware`, `constrained_filter`). Add new
-#' strategies by registering them here.
+#' (`lean`, `constrained`, `filter_aware`, `constrained_filter`, and the
+#' `_v2` variants). Add new strategies by registering them here.
 #'
 #' @export
 PROMPT_VERSIONS <- list(
-  lean                = PROMPT_LEAN,
-  constrained         = PROMPT_CONSTRAINED,
-  filter_aware        = PROMPT_FILTER_AWARE,
-  constrained_filter  = PROMPT_CONSTRAINED_FILTER
+  lean                   = PROMPT_LEAN,
+  constrained            = PROMPT_CONSTRAINED,
+  filter_aware           = PROMPT_FILTER_AWARE,
+  constrained_filter     = PROMPT_CONSTRAINED_FILTER,
+  constrained_v2         = PROMPT_CONSTRAINED_V2,
+  constrained_filter_v2  = PROMPT_CONSTRAINED_FILTER_V2,
+  constrained_v3         = PROMPT_CONSTRAINED_V3,
+  constrained_filter_v3  = PROMPT_CONSTRAINED_FILTER_V3
 )
