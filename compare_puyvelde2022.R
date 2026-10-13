@@ -87,8 +87,14 @@ species_of <- function(p) {
   fcase(s == "HUMAN", "HUMAN", s %in% c("YEAST", "ECOLI"), "SPIKED", default = "OTHER")
 }
 
+# NORM=1 repeats the comparison with MSstats' default normalization
+# (equalizeMedians) in separate result folders, to check whether a choice
+# that differs under the data owner's settings is equivalent under defaults.
+NORM <- identical(Sys.getenv("NORM"), "1")
+
 res <- run_downstream(list(
-  dataset = "Puyvelde2022", slug = "puyvelde2022",
+  dataset = if (NORM) "Puyvelde2022, default normalization" else "Puyvelde2022",
+  slug = if (NORM) "puyvelde2022_norm" else "puyvelde2022",
   label = chosen$label, description = chosen$description, mapping = chosen$mapping,
   # Read here so the list holds the only copy, which the engine frees after converting
   raw = fread(REPORT, showProgress = FALSE),
@@ -96,7 +102,7 @@ res <- run_downstream(list(
   hand_convert = function(x, a) SpectronauttoMSstatsFormat(x, annotation = a, use_log_file = FALSE),
   species_of = species_of, protein_key = protein_key,
   positive = "SPIKED", negative = "HUMAN",
-  dp_args = list(normalization = FALSE),
+  dp_args = if (NORM) list() else list(normalization = FALSE),
   build_contrast = function(levs) {
     if (!setequal(levs, c("A", "B"))) stop("Unexpected conditions: ", paste(levs, collapse = ", "))
     matrix(c(1, -1)[match(levs, c("A", "B"))], nrow = 1, dimnames = list("A-B", levs))
