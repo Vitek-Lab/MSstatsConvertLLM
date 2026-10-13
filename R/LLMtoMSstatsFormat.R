@@ -148,14 +148,13 @@ LLMtoMSstatsFormat <- function(
   }
   
   # ---------------------------------------------------------------
-  # 5. Type coercion. Intensity == 0 -> NA matches the converters; the
-  #    previous < 1 also nulled values the converters keep.
+  # 5. Type coercion. Zero intensities become missing later, after
+  #    preprocessing, where the converters do it.
   # ---------------------------------------------------------------
   if ("Intensity" %in% colnames(input)) {
     suppressWarnings(
       input[, Intensity := as.numeric(as.character(Intensity))]
     )
-    input[, Intensity := ifelse(Intensity == 0, NA_real_, Intensity)]
   }
   if ("PrecursorCharge" %in% colnames(input)) {
     suppressWarnings(
@@ -259,6 +258,11 @@ LLMtoMSstatsFormat <- function(
     columns_to_fill = columns_to_fill
   )
   
+  # Zero intensities become missing here, after preprocessing, as in the
+  # converters. Preprocessing can turn intensities below 1 into zero, so
+  # doing it any earlier would miss those.
+  input[, Intensity := ifelse(Intensity == 0, NA_real_, Intensity)]
+
   input <- MSstatsConvert::MSstatsBalancedDesign(
     input, feature_columns,
     remove_few = removeFewMeasurements
@@ -324,9 +328,14 @@ LLMtoMSstatsFormat <- function(
 #' Numeric comparisons become `score_filtering`, value matches become
 #' `exact_filtering`, both with `behavior = "fill"`.
 #'
-#' `equals` on a logical column is inverted to `not_equals`, since
-#' `filter_symbols` names the values to remove. On any other column type it
-#' cannot be expressed without enumerating the column, so it is skipped.
+#' `filter_symbols` names the values to remove, so `equals` is inverted. On a
+#' logical column that is the opposite value; on any other column it is every
+#' other value present in the data, missing values included.
+#'
+#' Each filter drops its column once it has run, so a second filter on the
+#' same column would find nothing to act on. Exclusions on one column are
+#' therefore merged into a single filter, and of several score filters on one
+#' column only the last drops it.
 #'
 #' @param input data.table of raw tool output, before renaming
 #' @param llm_mapping list with optional $filters array
@@ -422,19 +431,29 @@ LLMtoMSstatsFormat <- function(
         value = val, kind = "exact"))
   
     } else if (op == "equals") {
-      if (!is.logical(col_vals)) {
-        .skip(col, op, val,
-              "equals on a non-logical column cannot be expressed as a removal set")
-        next
-      }
-      target <- suppressWarnings(as.logical(val))
-      if (is.na(target)) {
-        .skip(col, op, val, "value is not a logical")
-        next
+      if (is.logical(col_vals)) {
+        target <- suppressWarnings(as.logical(val))
+        if (is.na(target)) {
+          .skip(col, op, val, "value is not a logical")
+          next
+        }
+        symbols  <- !target
+        op_label <- "equals (inverted)"
+      } else {
+        target  <- .coerceFilterValue(val, col_vals)
+        present <- unique(col_vals)
+        if (!target %in% present) {
+          .skip(col, op, val,
+                "value not present in the column, so keeping only it would remove every row")
+          next
+        }
+        # Keeping only `target` means removing every other value present
+        symbols  <- setdiff(present, target)
+        op_label <- sprintf("equals (as exclusion of %d other values)", length(symbols))
       }
       exact[[key]] <- list(
         col_name       = col,
-        filter_symbols = !target,
+        filter_symbols = symbols,
         behavior       = "fill",
         fill_value     = NA_real_,
         filter         = TRUE,
@@ -442,7 +461,7 @@ LLMtoMSstatsFormat <- function(
       )
       keep_cols <- c(keep_cols, col)
       applied <- rbind(applied, data.table::data.table(
-        column = col, operation = "equals (inverted)",
+        column = col, operation = op_label,
         value = val, kind = "exact"))
   
     } else {
@@ -456,6 +475,28 @@ LLMtoMSstatsFormat <- function(
     }
   }
   
+  # One filter per column. Merge exclusions on the same column, and of several
+  # score filters on one column let only the last drop it.
+  if (length(exact) > 1) {
+    exact_cols <- vapply(exact, function(e) e$col_name, character(1))
+    exact <- lapply(unique(exact_cols), function(cn) {
+      group  <- exact[exact_cols == cn]
+      merged <- group[[1]]
+      merged$filter_symbols <- unique(unlist(lapply(group, function(e) e$filter_symbols)))
+      merged
+    })
+    names(exact) <- paste0("llm_exact_", seq_along(exact))
+  }
+  score_cols <- vapply(score, function(s) s$score_column, character(1))
+  for (i in seq_along(score)) {
+    if (any(score_cols[-seq_len(i)] == score_cols[i])) score[[i]]$drop_column <- FALSE
+  }
+  both <- intersect(score_cols, vapply(exact, function(e) e$col_name, character(1)))
+  if (length(both)) {
+    warning("Columns with both a score and an exact filter: ", paste(both, collapse = ", "),
+            ". Whichever runs first drops the column, so the other may not apply.")
+  }
+
   list(score = score, exact = exact, skipped = skipped,
        applied = applied, keep_cols = unique(keep_cols))
 }
