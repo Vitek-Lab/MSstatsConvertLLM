@@ -2,9 +2,10 @@
 # compare_solivais.R: downstream comparison on Solivais2024 (MetaMorpheus)
 #
 # E. coli is spiked into a constant human background at designed ratios, so a
-# significant human protein is a false positive. Preprocessing follows the
-# data owner's analysis (code-tony.R) and is applied identically to both
-# paths. The shared machinery is in downstream.R.
+# significant human protein is a false positive. Both paths use dataProcess
+# with medians equalized, the setting used on all three datasets, which assumes
+# most proteins do not change in abundance. The shared machinery is in
+# downstream.R.
 #
 # Run from the repository root:
 #   caffeinate -i Rscript compare_solivais.R
@@ -90,7 +91,7 @@ run_downstream(list(
   hand_convert = function(x, a) MetamorpheusToMSstatsFormat(x, annotation = a, use_log_file = FALSE),
   species_of = function(p) fcase(grepl("\\|ECOLI$", p), "ECOLI", grepl("\\|HUMAN$", p), "HUMAN"),
   positive = "ECOLI", negative = "HUMAN",
-  dp_args = list(normalization = FALSE),
+  dp_args = list(normalization = "equalizeMedians"),
   build_contrast = function(levs) {
     if (!setequal(levs, c(REFERENCE, names(SPIKE_RATIO)))) {
       stop("Unexpected conditions: ", paste(levs, collapse = ", "))
