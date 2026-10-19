@@ -1,0 +1,126 @@
+# figure4_downstream.R
+# Figure 4 (downstream comparison) and the replicate-CV check, built from the
+# saved downstream results. Nothing is recomputed: every number comes from
+# results/<run>/full_results.rds and the conversion caches.
+#
+# Run from the repo root:  Rscript figure4_downstream.R
+# Writes results/Figure4_downstream.pdf and .png, and prints the numbers the
+# caption and the text need.
+
+suppressPackageStartupMessages({
+  library(data.table)
+  library(ggplot2)
+})
+
+# One panel per mapping choice, in the order the Results text discusses them.
+panels <- list(
+  list(run = "downstream_puyvelde2022_reference_ProteinName_PG.ProteinNames",
+       choice = "a  Protein names instead of IDs", data = "Spectronaut, Puyvelde2022"),
+  list(run = "downstream_puyvelde2022_reference_Intensity_F.NormalizedPeakArea",
+       choice = "b  Normalized peak area", data = "Spectronaut, Puyvelde2022"),
+  list(run = "downstream_pxd005642_llama3.1-8b_constrained_v3",
+       choice = "c  Intensity instead of Precursor Area", data = "Proteome Discoverer, PXD005642"),
+  list(run = "downstream_solivais_llama3.1-8b_lean",
+       choice = "d  Unmodified sequence", data = "MetaMorpheus, Solivais2024"),
+  list(run = "downstream_puyvelde2022_llama3.1-8b_constrained_v3",
+       choice = "e  No filters proposed", data = "Spectronaut, Puyvelde2022"),
+  list(run = "downstream_pxd005642_deepseek-r1-14b_filter_aware",
+       choice = "f  Extra quality filters", data = "Proteome Discoverer, PXD005642")
+)
+CAP   <- 20      # cap -log10(adjusted p) for display only; stated in the caption
+ALPHA <- 0.05
+NEAR  <- 0.20    # a disagreeing protein is "near the threshold" if the path that
+                 # missed it still has an adjusted p-value at or below this
+
+points <- list(); counts <- list()
+for (p in panels) {
+  f <- file.path("results", p$run, "full_results.rds")
+  if (!file.exists(f)) stop("Missing ", f, ". This run's downstream comparison has not been saved.")
+  r   <- readRDS(f)
+  pos <- r$config$positive
+  h   <- as.data.table(r$hand)
+  l   <- as.data.table(r$llm)
+
+  m <- merge(h[, .(Protein, Label, adjp_h = adj.pvalue, sig_h = sig, species)],
+             l[, .(Protein, Label, adjp_l = adj.pvalue, sig_l = sig)],
+             by = c("Protein", "Label"))
+  m[, truth := fifelse(species == pos, "changes (spiked)", "does not change")]
+  m[, x := pmin(-log10(pmax(adjp_h, 1e-300)), CAP)]
+  m[, y := pmin(-log10(pmax(adjp_l, 1e-300)), CAP)]
+  m[, panel := p$choice]
+  points[[p$run]] <- m[!is.na(x) & !is.na(y)]
+
+  n_sig <- function(d) sum(d$sig, na.rm = TRUE)
+  n_tp  <- function(d) sum(d$sig & d$species == pos, na.rm = TRUE)
+  disc  <- m[xor(sig_h %in% TRUE, sig_l %in% TRUE)]
+  near  <- disc[pmax(adjp_h, adjp_l, na.rm = TRUE) <= NEAR]
+  counts[[p$run]] <- data.table(
+    panel = p$choice, data = p$data, run = p$run,
+    conv_sig = n_sig(h), conv_true = n_tp(h), conv_false = n_sig(h) - n_tp(h),
+    llm_sig  = n_sig(l), llm_true  = n_tp(l), llm_false  = n_sig(l) - n_tp(l),
+    disagree = nrow(disc), disagree_near = nrow(near))
+}
+
+d   <- rbindlist(points)
+ann <- rbindlist(counts)
+ann[, strip := sprintf("%s\n%s\nConverter %d significant (%d true)\nLLM path %d significant (%d true)",
+                       panel, data, conv_sig, conv_true, llm_sig, llm_true)]
+d <- merge(d, ann[, .(panel, strip)], by = "panel")
+d[, strip := factor(strip, levels = ann$strip)]
+
+thr <- -log10(ALPHA)
+g <- ggplot(d, aes(x, y, colour = truth)) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "grey55") +
+  geom_hline(yintercept = thr, linetype = "dotted", colour = "grey65") +
+  geom_vline(xintercept = thr, linetype = "dotted", colour = "grey65") +
+  geom_point(alpha = 0.35, size = 0.6) +
+  facet_wrap(~ strip, ncol = 3, scales = "free") +
+  scale_colour_manual(values = c("changes (spiked)" = "#B03A2E", "does not change" = "#8C9AA3"),
+                      name = NULL) +
+  guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2))) +
+  labs(x = "-log10 adjusted p-value, hand-written converter",
+       y = "-log10 adjusted p-value, LLM path") +
+  theme_minimal(base_size = 8.5) +
+  theme(legend.position = "bottom",
+        strip.text = element_text(hjust = 0, face = "bold", lineheight = 1.05),
+        panel.grid.minor = element_blank())
+
+ggsave("results/Figure4_downstream.pdf", g, width = 7.2, height = 6.0)
+ggsave("results/Figure4_downstream.png", g, width = 7.2, height = 6.0, dpi = 200)
+
+cat("\n=== Figure 4 counts (paste these back) ===\n")
+print(ann[, .(run, conv_sig, conv_true, conv_false, llm_sig, llm_true, llm_false, disagree, disagree_near)])
+cat(sprintf("Display cap: -log10 adjusted p clipped at %d. Near threshold: missed path's adjusted p <= %.2f.\n", CAP, NEAR))
+
+# ---------------------------------------------------------------------------
+# Replicate CV: Intensity (llama3.1-8b mapping) against Precursor Area
+# (hand-written converter) on PXD005642, from the conversion caches.
+# ---------------------------------------------------------------------------
+pick_table <- function(x) {
+  if (is.data.frame(x)) return(as.data.table(x))
+  if (is.list(x)) for (e in x) if (is.data.frame(e) && "Intensity" %in% names(e)) return(as.data.table(e))
+  stop("No converted table with an Intensity column found in this cache file.")
+}
+feature_cv <- function(dt) {
+  dt  <- dt[!is.na(Intensity) & Intensity > 0]
+  key <- intersect(c("ProteinName", "PeptideSequence", "PrecursorCharge", "FragmentIon", "ProductCharge"), names(dt))
+  dt[, feature := do.call(paste, c(.SD, sep = "|")), .SDcols = key]
+  dt[, .(n = .N, cv = sd(Intensity) / mean(Intensity)), by = .(feature, Condition)][n >= 2]
+}
+hand_file <- "results/downstream_pxd005642_hand/cache/hand_converted.rds"
+llm_file  <- "results/downstream_pxd005642_llama3.1-8b_constrained_v3/cache/llm_converted.rds"
+for (f in c(hand_file, llm_file)) if (!file.exists(f)) stop("Missing ", f)
+cv_area <- feature_cv(pick_table(readRDS(hand_file)))
+cv_int  <- feature_cv(pick_table(readRDS(llm_file)))
+q <- function(v) sprintf("%.1f%% (IQR %.1f to %.1f%%)", 100 * median(v), 100 * quantile(v, 0.25), 100 * quantile(v, 0.75))
+cat("\n=== Replicate CV within condition, PXD005642 (paste these back) ===\n")
+cat(sprintf("Precursor Area: median %s over %d feature-condition pairs\n", q(cv_area$cv), nrow(cv_area)))
+cat(sprintf("Intensity:      median %s over %d feature-condition pairs\n", q(cv_int$cv), nrow(cv_int)))
+paired <- merge(cv_area, cv_int, by = c("feature", "Condition"), suffixes = c("_area", "_int"))
+if (nrow(paired) > 0) {
+  cat(sprintf("Same feature and condition in both: %d pairs; Intensity CV higher in %.0f%% of them\n",
+              nrow(paired), 100 * mean(paired$cv_int > paired$cv_area)))
+} else {
+  cat("No shared feature keys between the two paths, so only the unpaired medians above apply.\n")
+}
+cat("\nFigure written to results/Figure4_downstream.pdf and .png\n")
