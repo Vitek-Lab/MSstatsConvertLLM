@@ -32,7 +32,7 @@ create_chat <- function(model_key) {
   if (spec$provider == "ollama") {
     ellmer::chat_ollama(
       model = spec$model,
-      base_url = OLLAMA_URL,
+      base_url = .ollama_url(),
       params = ellmer::params(
         format      = "json",
         temperature = 0,
@@ -410,7 +410,7 @@ print_scorecard <- function(scores, trial_result) {
       cat("    (none)\n")
     } else {
       for (f in predicted_filters) {
-        cat(sprintf("    %s %s %s  (conf=%.2f)\n",
+        cat(sprintf("    keep rows where %s %s %s  (conf=%.2f)\n",
                     f[["column"]], f[["operation"]], f[["value"]],
                     as.numeric(f[["confidence"]])))
         cat(sprintf("      %s\n", f[["description"]]))
