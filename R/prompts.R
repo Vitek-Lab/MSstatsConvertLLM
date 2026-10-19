@@ -197,14 +197,19 @@ MSstats requires these fields (in this exact order):
 TASK 2 — FILTER DISCOVERY:
 Identify columns that should be used to FILTER rows before analysis.
 These are tool-specific quality control columns NOT part of the 8 MSstats
-fields above. Common examples in proteomics:
+fields above. Each filter is a condition on the rows to KEEP: rows that
+meet it stay, and all other rows are removed. Write the condition the good
+rows meet, never the one the rows to drop meet. To drop decoys, for example,
+write decoy flag equals FALSE. Common examples in proteomics:
 
-- Decoy/contaminant flags (e.g., columns indicating reverse sequences,
-  contaminant proteins, or decoy hits that should be removed)
-- Exclusion flags (e.g., features flagged as excluded from quantification)
-- Fragment loss type (e.g., keeping only 'noloss' fragments)
-- Score thresholds (e.g., posterior error probability, percolator scores)
-- Modification flags (e.g., filtering out unwanted PTMs)
+- Decoy/contaminant flags (e.g., keep rows whose reverse, contaminant or
+  decoy flag is FALSE)
+- Exclusion flags (e.g., keep features NOT flagged as excluded from
+  quantification)
+- Fragment loss type (e.g., keep only 'noloss' fragments)
+- Score thresholds (e.g., keep rows whose posterior error probability is
+  below a cutoff, or whose score is above one)
+- Modification flags (e.g., keep rows without unwanted PTMs)
 
 For each filter, specify:
 - \"column\": the exact column name from DATA HEADER
@@ -300,13 +305,17 @@ CONFIDENCE SCORING:
 
 TASK 2 — FILTER DISCOVERY:
 Identify columns to FILTER rows before analysis. These are QC columns
-NOT part of the 8 MSstats fields above. Look for:
+NOT part of the 8 MSstats fields above. Each filter is a condition on the
+rows to KEEP: rows that meet it stay, and all other rows are removed. Write
+the condition the good rows meet, never the one the rows to drop meet.
+Look for:
 
-- Decoy/contaminant flags (reverse sequences, contaminant proteins)
-- Exclusion flags (features excluded from quantification: remove excluded features.)
-- Fragment loss type (e.g., keeping only 'noloss' fragments)
-- Score thresholds (posterior error probability, percolator scores)
-- Modification flags (filtering out unwanted PTMs)
+- Decoy/contaminant flags (keep rows whose decoy or contaminant flag is FALSE)
+- Exclusion flags (keep features NOT excluded from quantification)
+- Fragment loss type (keep only 'noloss' fragments)
+- Score thresholds (keep rows whose posterior error probability is below a
+  cutoff, or whose score is above one)
+- Modification flags (keep rows without unwanted PTMs)
 
 For each filter, specify:
 - \"column\": exact column name from DATA HEADER
@@ -462,13 +471,17 @@ CONFIDENCE SCORING:
 
 TASK 2 — FILTER DISCOVERY:
 Identify columns to FILTER rows before analysis. These are QC columns
-NOT part of the 8 MSstats fields above. Look for:
+NOT part of the 8 MSstats fields above. Each filter is a condition on the
+rows to KEEP: rows that meet it stay, and all other rows are removed. Write
+the condition the good rows meet, never the one the rows to drop meet.
+Look for:
 
-- Decoy/contaminant flags (reverse sequences, contaminant proteins)
-- Exclusion flags (features excluded from quantification: remove excluded features.)
-- Fragment loss type (e.g., keeping only 'noloss' fragments)
-- Score thresholds (posterior error probability, percolator scores)
-- Modification flags (filtering out unwanted PTMs)
+- Decoy/contaminant flags (keep rows whose decoy or contaminant flag is FALSE)
+- Exclusion flags (keep features NOT excluded from quantification)
+- Fragment loss type (keep only 'noloss' fragments)
+- Score thresholds (keep rows whose posterior error probability is below a
+  cutoff, or whose score is above one)
+- Modification flags (keep rows without unwanted PTMs)
 
 For each filter, specify:
 - \"column\": exact column name from DATA HEADER
