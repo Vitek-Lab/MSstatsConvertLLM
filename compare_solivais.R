@@ -88,7 +88,12 @@ run_downstream(list(
   dataset = "Solivais2024", slug = "solivais",
   label = chosen$label, description = chosen$description, mapping = chosen$mapping,
   raw = pre, annotation = annotation, run_col = "File Name",
-  hand_convert = function(x, a) MetamorpheusToMSstatsFormat(x, annotation = a, use_log_file = FALSE),
+  # MetamorpheusToMSstatsFormat keeps zero intensities, which the other
+  # converters and the LLM path set to missing; do the same here.
+  hand_convert = function(x, a) {
+    out <- as.data.table(MetamorpheusToMSstatsFormat(x, annotation = a, use_log_file = FALSE))
+    out[, Intensity := ifelse(Intensity == 0, NA_real_, Intensity)]
+  },
   species_of = function(p) fcase(grepl("\\|ECOLI$", p), "ECOLI", grepl("\\|HUMAN$", p), "HUMAN"),
   positive = "ECOLI", negative = "HUMAN",
   dp_args = list(normalization = "equalizeMedians"),
