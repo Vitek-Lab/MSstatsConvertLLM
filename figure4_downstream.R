@@ -79,7 +79,9 @@ g <- ggplot(d, aes(x, y, colour = truth)) +
   geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "grey55") +
   geom_hline(yintercept = thr, linetype = "dotted", colour = "grey65") +
   geom_vline(xintercept = thr, linetype = "dotted", colour = "grey65") +
-  geom_point(alpha = 0.35, size = 0.6) +
+  # Points only are rasterised, so the PDF opens quickly; text and lines stay
+  # vector. ragg, because ggrastr's default Cairo device needs XQuartz.
+  ggrastr::rasterise(geom_point(alpha = 0.35, size = 0.6), dpi = 600, dev = "ragg") +
   facet_wrap(~ strip, ncol = 3, scales = "free") +
   scale_colour_manual(values = c("changes (spiked)" = "#B03A2E", "does not change" = "#8C9AA3"),
                       name = NULL) +
