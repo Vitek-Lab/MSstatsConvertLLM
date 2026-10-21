@@ -15,17 +15,23 @@ suppressPackageStartupMessages({
 # One panel per mapping choice, in the order the Results text discusses them.
 panels <- list(
   list(run = "downstream_puyvelde2022_reference_ProteinName_PG.ProteinNames",
-       choice = "a  Protein names instead of IDs", data = "Spectronaut, Puyvelde2022"),
+       choice = "(a) LLM-guided converter uses UniProt mnemonics instead of UniProt accessions",
+       data = "Spectronaut, PXD028735"),
   list(run = "downstream_puyvelde2022_reference_Intensity_F.NormalizedPeakArea",
-       choice = "b  Normalized peak area", data = "Spectronaut, Puyvelde2022"),
+       choice = "(b) LLM-guided converter uses normalized peak area instead of peak area",
+       data = "Spectronaut, PXD028735"),
   list(run = "downstream_pxd005642_llama3.1-8b_constrained_v3",
-       choice = "c  Intensity instead of Precursor Area", data = "Proteome Discoverer, PXD005642"),
+       choice = "(c) LLM-guided converter uses Intensity instead of Precursor Area",
+       data = "Proteome Discoverer, PXD005642"),
   list(run = "downstream_solivais_llama3.1-8b_lean",
-       choice = "d  Unmodified sequence", data = "MetaMorpheus, Solivais2024"),
+       choice = "(d) LLM-guided converter uses unmodified sequence instead of modified sequence",
+       data = "MetaMorpheus, PXD003881"),
   list(run = "downstream_puyvelde2022_llama3.1-8b_constrained_v3",
-       choice = "e  No filters proposed", data = "Spectronaut, Puyvelde2022"),
+       choice = "(e) LLM-guided converter uses no filtering instead of standard filtering",
+       data = "Spectronaut, PXD028735"),
   list(run = "downstream_pxd005642_deepseek-r1-14b_filter_aware",
-       choice = "f  Extra quality filters", data = "Proteome Discoverer, PXD005642")
+       choice = "(f) LLM-guided converter uses extra quality filters on top of standard filtering",
+       data = "Proteome Discoverer, PXD005642")
 )
 CAP   <- 20      # cap -log10(adjusted p) for display only; stated in the caption
 ALPHA <- 0.05
@@ -63,8 +69,8 @@ for (p in panels) {
 
 d   <- rbindlist(points)
 ann <- rbindlist(counts)
-ann[, strip := sprintf("%s\n%s\nConverter %d significant (%d true)\nLLM path %d significant (%d true)",
-                       panel, data, conv_sig, conv_true, llm_sig, llm_true)]
+# Titles wrap to fit a third of the page width; the tool and accession get their own line
+ann[, strip := sprintf("%s\n(%s)", vapply(strwrap(panel, 34, simplify = FALSE), paste, "", collapse = "\n"), data)]
 d <- merge(d, ann[, .(panel, strip)], by = "panel")
 d[, strip := factor(strip, levels = ann$strip)]
 
@@ -79,14 +85,14 @@ g <- ggplot(d, aes(x, y, colour = truth)) +
                       name = NULL) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2))) +
   labs(x = "-log10 adjusted p-value, hand-written converter",
-       y = "-log10 adjusted p-value, LLM path") +
+       y = "-log10 adjusted p-value, LLM-guided converter") +
   theme_minimal(base_size = 8.5) +
   theme(legend.position = "bottom",
         strip.text = element_text(hjust = 0, face = "bold", lineheight = 1.05),
         panel.grid.minor = element_blank())
 
-ggsave("results/Figure4_downstream.pdf", g, width = 7.2, height = 6.0)
-ggsave("results/Figure4_downstream.png", g, width = 7.2, height = 6.0, dpi = 200)
+ggsave("results/Figure4_downstream.pdf", g, width = 7.2, height = 6.8)
+ggsave("results/Figure4_downstream.png", g, width = 7.2, height = 6.8, dpi = 200)
 
 cat("\n=== Figure 4 counts (paste these back) ===\n")
 print(ann[, .(run, conv_sig, conv_true, conv_false, llm_sig, llm_true, llm_false, disagree, disagree_near)])
