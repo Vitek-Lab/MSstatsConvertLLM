@@ -17,6 +17,7 @@
 #   LLM_MODEL=llama3.1-8b LLM_PROMPT=constrained_v3 N_CORES=2 caffeinate -i Rscript compare_puyvelde2022.R
 #   LLM_MODEL=reference REF_SWAP=Intensity=F.NormalizedPeakArea N_CORES=2 caffeinate -i Rscript compare_puyvelde2022.R
 #   LLM_MODEL=reference REF_SWAP=ProteinName=PG.ProteinNames N_CORES=2 caffeinate -i Rscript compare_puyvelde2022.R
+#   LLM_MODEL=reference REF_FILTERS=none N_CORES=2 caffeinate -i Rscript compare_puyvelde2022.R
 # ============================================================
 
 source("downstream.R")
