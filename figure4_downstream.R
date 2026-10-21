@@ -30,7 +30,7 @@ panels <- list(
        choice = "(e) LLM-guided converter applies no filtering or censoring",
        data = "Spectronaut, PXD028735"),
   list(run = "downstream_pxd005642_deepseek-r1-14b_filter_aware",
-       choice = "(f) LLM-guided converter uses extra quality filters on top of standard filtering",
+       choice = "(f) LLM-guided converter censors low-confidence matches the hand-written converter keeps",
        data = "Proteome Discoverer, PXD005642")
 )
 CAP   <- 20      # cap -log10(adjusted p) for display only; stated in the caption
