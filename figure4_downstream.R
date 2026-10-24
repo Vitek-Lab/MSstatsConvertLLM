@@ -15,16 +15,16 @@ suppressPackageStartupMessages({
 # One panel per mapping choice, in the order the Results text discusses them.
 panels <- list(
   list(run = "downstream_puyvelde2022_reference_ProteinName_PG.ProteinNames",
-       choice = "(a) UniProt mnemonics instead of accessions",
+       choice = "(a) Mnemonics instead of accessions",
        data = "Spectronaut"),
   list(run = "downstream_puyvelde2022_reference_Intensity_F.NormalizedPeakArea",
-       choice = "(b) Normalized peak area instead of peak area",
+       choice = "(b) Normalized peak area",
        data = "Spectronaut"),
   list(run = "downstream_pxd005642_llama3.1-8b_constrained_v3",
-       choice = "(c) Intensity instead of Precursor Area",
+       choice = "(c) Intensity instead of peak area",
        data = "Proteome Discoverer"),
   list(run = "downstream_solivais_llama3.1-8b_lean",
-       choice = "(d) Unmodified instead of modified sequence",
+       choice = "(d) Unmodified peptide sequence",
        data = "MetaMorpheus"),
   list(run = "downstream_puyvelde2022_reference_nofilters",
        choice = "(e) No filtering or censoring",
@@ -69,8 +69,8 @@ for (p in panels) {
 
 d   <- rbindlist(points)
 ann <- rbindlist(counts)
-# Titles wrap to fit a third of the page width; the tool and accession get their own line
-ann[, strip := sprintf("%s\n(%s)", vapply(strwrap(panel, 34, simplify = FALSE), paste, "", collapse = "\n"), data)]
+# Titles wrap to fit a third of the page width; the tool gets its own line
+ann[, strip := sprintf("%s\n%s", vapply(strwrap(panel, 40, simplify = FALSE), paste, "", collapse = "\n"), data)]
 d <- merge(d, ann[, .(panel, strip)], by = "panel")
 d[, strip := factor(strip, levels = ann$strip)]
 
