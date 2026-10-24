@@ -15,23 +15,23 @@ suppressPackageStartupMessages({
 # One panel per mapping choice, in the order the Results text discusses them.
 panels <- list(
   list(run = "downstream_puyvelde2022_reference_ProteinName_PG.ProteinNames",
-       choice = "(a) LLM-guided converter uses UniProt mnemonics instead of UniProt accessions",
-       data = "Spectronaut, PXD028735"),
+       choice = "(a) UniProt mnemonics instead of accessions",
+       data = "Spectronaut"),
   list(run = "downstream_puyvelde2022_reference_Intensity_F.NormalizedPeakArea",
-       choice = "(b) LLM-guided converter uses normalized peak area instead of peak area",
-       data = "Spectronaut, PXD028735"),
+       choice = "(b) Normalized peak area instead of peak area",
+       data = "Spectronaut"),
   list(run = "downstream_pxd005642_llama3.1-8b_constrained_v3",
-       choice = "(c) LLM-guided converter uses Intensity instead of Precursor Area",
-       data = "Proteome Discoverer, PXD005642"),
+       choice = "(c) Intensity instead of Precursor Area",
+       data = "Proteome Discoverer"),
   list(run = "downstream_solivais_llama3.1-8b_lean",
-       choice = "(d) LLM-guided converter uses unmodified sequence instead of modified sequence",
-       data = "MetaMorpheus, PXD003881"),
+       choice = "(d) Unmodified instead of modified sequence",
+       data = "MetaMorpheus"),
   list(run = "downstream_puyvelde2022_reference_nofilters",
-       choice = "(e) LLM-guided converter applies no filtering or censoring",
-       data = "Spectronaut, PXD028735"),
+       choice = "(e) No filtering or censoring",
+       data = "Spectronaut"),
   list(run = "downstream_pxd005642_deepseek-r1-14b_filter_aware",
-       choice = "(f) LLM-guided converter censors low-confidence matches the hand-written converter keeps",
-       data = "Proteome Discoverer, PXD005642")
+       choice = "(f) Additional quality filters",
+       data = "Proteome Discoverer")
 )
 CAP   <- 20      # cap -log10(adjusted p) for display only; stated in the caption
 ALPHA <- 0.05
