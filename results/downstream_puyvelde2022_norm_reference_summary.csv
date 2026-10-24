@@ -1,2 +1,0 @@
-Label,hand_tested,hand_with_issue,hand_significant,hand_tp,hand_fp,hand_spiked_median_log2fc,hand_human_median_log2fc,hand_fdr,llm_tested,llm_with_issue,llm_significant,llm_tp,llm_fp,llm_spiked_median_log2fc,llm_human_median_log2fc,llm_fdr,sig_shared,sig_only_hand,sig_only_llm,tested_only_hand,tested_only_llm,log2fc_r,log2fc_n
-A-B,10234,10,6768,3640,3128,0.679066908800177,-0.0937393918789127,0.462174940898345,10234,10,6768,3640,3128,0.679066908800176,-0.0937393918789099,0.462174940898345,6768,0,0,0,0,1,10234
