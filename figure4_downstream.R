@@ -87,7 +87,7 @@ g <- ggplot(d, aes(x, y, colour = truth)) +
                       name = NULL) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2))) +
   labs(x = "-log10 adjusted p-value, hand-written converter",
-       y = "-log10 adjusted p-value, LLM-guided converter") +
+       y = "-log10 adjusted p-value, LLM-based converter") +
   theme_minimal(base_size = 8.5) +
   theme(legend.position = "bottom",
         strip.text = element_text(hjust = 0, face = "bold", lineheight = 1.05),
