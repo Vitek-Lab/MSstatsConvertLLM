@@ -48,6 +48,102 @@ create_chat <- function(model_key) {
 }
 
 # ------------------------------------------------------------------
+# Infer a mapping for any table of tool output
+# ------------------------------------------------------------------
+
+#' Infer an MSstats mapping for a table of tool output
+#'
+#' Builds the data preview, asks a model to map the columns onto the MSstats
+#' schema, and returns the parsed mapping. This is the step [run_trial()]
+#' performs, without the benchmark bookkeeping: call it directly on the output
+#' of a tool that has no converter of its own, then pass the result to
+#' [LLMtoMSstatsFormat()].
+#'
+#' @param data A data frame of raw tool output. Only its column names and the
+#'   first `n_preview` rows are sent to the model.
+#' @param model_key Key into [MODEL_REGISTRY] (e.g. `"llama3.1-8b"`).
+#' @param prompt_key One of `names(PROMPT_VERSIONS)` (e.g. `"lean"`,
+#'   `"constrained"`, `"constrained_filter"`).
+#' @param acquisition `"DIA"`, `"DDA"`, or `NULL` to let the model guess.
+#' @param n_preview Number of rows to include in the data preview.
+#' @param allow_transforms Enable packed-column transform detection.
+#' @param use_structured Use `chat_structured()` (`TRUE`) or raw `chat()`
+#'   (`FALSE`).
+#' @return The parsed mapping: a list with `mappings`, `confidence`, `notes`
+#'   and `warnings`, plus `filters` for a filter-aware prompt. This is the
+#'   object [run_trial()] returns as its `mapping` element and the one
+#'   [LLMtoMSstatsFormat()] takes as `llm_mapping`. How long the model took is
+#'   attached as the `elapsed_sec` attribute.
+#' @details Requires the optional `ellmer` package and a running model backend
+#'   (e.g. Ollama).
+#' @export
+infer_mapping <- function(data,
+                          model_key,
+                          prompt_key = "constrained",
+                          acquisition = NULL,
+                          n_preview = 3,
+                          allow_transforms = FALSE,
+                          use_structured = TRUE) {
+
+  preview <- make_json_preview(data, n_rows = n_preview)
+  system_prompt <- PROMPT_VERSIONS[[prompt_key]]
+  user_prompt   <- build_user_prompt(preview, acquisition = acquisition,
+                                     allow_transforms = allow_transforms)
+
+  # Create fresh chat with system prompt
+  chat <- create_chat(model_key)
+  chat$set_system_prompt(system_prompt)
+
+  # Run inference with timing
+  t0 <- Sys.time()
+
+  # Pick the right structured type based on prompt and transforms. Every prompt
+  # whose name says "filter" asks the model for quality filters, so the type must
+  # have somewhere to put them; a fixed list here silently discarded the filters
+  # of any prompt added later.
+  has_filters <- prompt_key %in% grep("filter", names(PROMPT_VERSIONS), value = TRUE)
+  result_type <- .select_mapping_type(has_filters, allow_transforms)
+
+  if (use_structured) {
+    result <- tryCatch(
+      chat$chat_structured(user_prompt, type = result_type, convert = TRUE),
+      error = function(e) {
+        message("  [WARN] chat_structured failed: ", e$message)
+        message("  [INFO] Falling back to raw chat()")
+        NULL
+      }
+    )
+
+    # Fallback: raw chat + manual parse
+    if (is.null(result)) {
+      chat2 <- create_chat(model_key)
+      chat2$set_system_prompt(system_prompt)
+      raw_text <- chat2$chat(user_prompt)
+      result <- tryCatch(
+        jsonlite::fromJSON(raw_text, simplifyVector = FALSE),
+        error = function(e) {
+          message("  [WARN] JSON parse failed: ", e$message)
+          list(mappings = list(), raw_response = raw_text)
+        }
+      )
+    }
+  } else {
+    raw_text <- chat$chat(user_prompt)
+    result <- tryCatch(
+      jsonlite::fromJSON(raw_text, simplifyVector = FALSE),
+      error = function(e) {
+        message("  [WARN] JSON parse failed: ", e$message)
+        list(mappings = list(), raw_response = raw_text)
+      }
+    )
+  }
+
+  elapsed <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+  attr(result, "elapsed_sec") <- round(elapsed, 2)
+  result
+}
+
+# ------------------------------------------------------------------
 # Run one benchmark trial
 # ------------------------------------------------------------------
 
@@ -80,60 +176,18 @@ run_trial <- function(model_key,
                       use_structured = TRUE,
                       source = "fixture") {
   
-  # Load data and build prompt
+  # Load the data, then infer the mapping. The time infer_mapping() reports is
+  # the model call alone, measured where it was measured here before; it rides
+  # back on the result and comes off again, so `mapping` is the bare object.
   df <- load_test_dataset(tool_name, source = source)
-  preview <- make_json_preview(df, n_rows = n_preview)
-  system_prompt <- PROMPT_VERSIONS[[prompt_key]]
-  user_prompt   <- build_user_prompt(preview, acquisition = acquisition,
-                                     allow_transforms = allow_transforms)
-  
-  # Create fresh chat with system prompt
-  chat <- create_chat(model_key)
-  chat$set_system_prompt(system_prompt)
-  
-  # Run inference with timing
-  t0 <- Sys.time()
-  
-  # Pick the right structured type based on prompt and transforms
-  has_filters <- prompt_key %in% c("filter_aware", "constrained_filter")
-  result_type <- .select_mapping_type(has_filters, allow_transforms)
-  
-  if (use_structured) {
-    result <- tryCatch(
-      chat$chat_structured(user_prompt, type = result_type, convert = TRUE),
-      error = function(e) {
-        message("  [WARN] chat_structured failed: ", e$message)
-        message("  [INFO] Falling back to raw chat()")
-        NULL
-      }
-    )
-    
-    # Fallback: raw chat + manual parse
-    if (is.null(result)) {
-      chat2 <- create_chat(model_key)
-      chat2$set_system_prompt(system_prompt)
-      raw_text <- chat2$chat(user_prompt)
-      result <- tryCatch(
-        jsonlite::fromJSON(raw_text, simplifyVector = FALSE),
-        error = function(e) {
-          message("  [WARN] JSON parse failed: ", e$message)
-          list(mappings = list(), raw_response = raw_text)
-        }
-      )
-    }
-  } else {
-    raw_text <- chat$chat(user_prompt)
-    result <- tryCatch(
-      jsonlite::fromJSON(raw_text, simplifyVector = FALSE),
-      error = function(e) {
-        message("  [WARN] JSON parse failed: ", e$message)
-        list(mappings = list(), raw_response = raw_text)
-      }
-    )
-  }
-  
-  elapsed <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
-  
+  result <- infer_mapping(df, model_key, prompt_key,
+                          acquisition      = acquisition,
+                          n_preview        = n_preview,
+                          allow_transforms = allow_transforms,
+                          use_structured   = use_structured)
+  elapsed <- attr(result, "elapsed_sec")
+  attr(result, "elapsed_sec") <- NULL
+
   # Post-hoc validation
   validation <- validate_mapping(result)
   
