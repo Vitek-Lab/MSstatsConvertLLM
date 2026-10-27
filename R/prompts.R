@@ -1,5 +1,5 @@
 # ============================================================
-# prompts.R — Prompt templates for schema inference
+# prompts.R - Prompt templates for schema inference
 # ============================================================
 
 # ------------------------------------------------------------------
@@ -12,14 +12,14 @@ You are a proteomics data converter. Your task is to map column names
 from an input dataset to the MSstats analysis schema.
 
 MSstats requires these fields (in this exact order):
-1. ProteinName     — protein identifier (e.g., UniProt accession)
-2. PeptideSequence — peptide or modified peptide sequence
-3. PrecursorCharge — charge state of the precursor ion
-4. FragmentIon     — fragment ion label (e.g., y7, b3)
-5. ProductCharge   — charge of the fragment ion
-6. Run             — raw file name or run identifier
-7. Intensity       — quantitative signal (peak area, intensity, etc.)
-8. Qvalue          — q-value or FDR for quality filtering
+1. ProteinName     \u2014 protein identifier (e.g., UniProt accession)
+2. PeptideSequence \u2014 peptide or modified peptide sequence
+3. PrecursorCharge \u2014 charge state of the precursor ion
+4. FragmentIon     \u2014 fragment ion label (e.g., y7, b3)
+5. ProductCharge   \u2014 charge of the fragment ion
+6. Run             \u2014 raw file name or run identifier
+7. Intensity       \u2014 quantitative signal (peak area, intensity, etc.)
+8. Qvalue          \u2014 q-value or FDR for quality filtering
 
 Rules:
 - Only use column names from the DATA HEADER below.
@@ -181,20 +181,20 @@ build_user_prompt <- function(data_preview_json, acquisition = NULL,
 PROMPT_FILTER_AWARE <- "
 You are a proteomics data converter with domain expertise.
 
-TASK 1 — COLUMN MAPPING:
+TASK 1 \u2014 COLUMN MAPPING:
 Map columns from the input dataset to the MSstats analysis schema.
 
 MSstats requires these fields (in this exact order):
-1. ProteinName     — protein identifier (e.g., UniProt accession)
-2. PeptideSequence — peptide or modified peptide sequence
-3. PrecursorCharge — charge state of the precursor ion
-4. FragmentIon     — fragment ion label (e.g., y7, b3)
-5. ProductCharge   — charge of the fragment ion
-6. Run             — raw file name or run identifier
-7. Intensity       — quantitative signal (peak area, intensity, etc.)
-8. Qvalue          — q-value or FDR for quality filtering
+1. ProteinName     \u2014 protein identifier (e.g., UniProt accession)
+2. PeptideSequence \u2014 peptide or modified peptide sequence
+3. PrecursorCharge \u2014 charge state of the precursor ion
+4. FragmentIon     \u2014 fragment ion label (e.g., y7, b3)
+5. ProductCharge   \u2014 charge of the fragment ion
+6. Run             \u2014 raw file name or run identifier
+7. Intensity       \u2014 quantitative signal (peak area, intensity, etc.)
+8. Qvalue          \u2014 q-value or FDR for quality filtering
 
-TASK 2 — FILTER DISCOVERY:
+TASK 2 \u2014 FILTER DISCOVERY:
 Identify columns that should be used to FILTER rows before analysis.
 These are tool-specific quality control columns NOT part of the 8 MSstats
 fields above. Common examples in proteomics:
@@ -256,7 +256,7 @@ You are a proteomics data converter. Map column names from an input
 dataset to the MSstats schema AND identify quality-control filters.
 Return ONLY valid JSON. Do all reasoning silently.
 
-TASK 1 — COLUMN MAPPING:
+TASK 1 \u2014 COLUMN MAPPING:
 
 MSstats required fields (output in this EXACT order):
 1. ProteinName
@@ -298,7 +298,7 @@ CONFIDENCE SCORING:
 - 0.80 generic/weak match
 - 0.00 if null
 
-TASK 2 — FILTER DISCOVERY:
+TASK 2 \u2014 FILTER DISCOVERY:
 Identify columns to FILTER rows before analysis. These are QC columns
 NOT part of the 8 MSstats fields above. Look for:
 
@@ -415,7 +415,7 @@ You are a proteomics data converter. Map column names from an input
 dataset to the MSstats schema AND identify quality-control filters.
 Return ONLY valid JSON. Do all reasoning silently.
 
-TASK 1 — COLUMN MAPPING:
+TASK 1 \u2014 COLUMN MAPPING:
 
 MSstats required fields (output in this EXACT order):
 1. ProteinName
@@ -460,7 +460,7 @@ CONFIDENCE SCORING:
 - 0.80 generic/weak match
 - 0.00 if null
 
-TASK 2 — FILTER DISCOVERY:
+TASK 2 \u2014 FILTER DISCOVERY:
 Identify columns to FILTER rows before analysis. These are QC columns
 NOT part of the 8 MSstats fields above. Look for:
 

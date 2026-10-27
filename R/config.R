@@ -42,10 +42,13 @@ MODEL_REGISTRY <- list(
 #'
 #' Defaults to a local Ollama instance. Set the `MSSTATS_OLLAMA_URL`
 #' environment variable to point at a remote server, for example an SSH
-#' tunnel to a GPU node.
+#' tunnel to a GPU node. The variable is read on every use, so it can be set
+#' after the package is attached. There is no assignment here: the name is an
+#' active binding, made in `.onLoad()`.
 #'
+#' @name OLLAMA_URL
 #' @export
-OLLAMA_URL <- Sys.getenv("MSSTATS_OLLAMA_URL", "http://localhost:11434")
+NULL
 
 # ------------------------------------------------------------------
 # 2. MSstats target schema
@@ -160,10 +163,12 @@ TOOL_TRANSFORMS <- list(
 #' Holds the files named in the Experimental Datasets table, truncated to
 #' their first rows. The model sees a three-row preview, so the truncation
 #' does not change its input. Override with the `MSSTATS_BENCHMARK_DATA`
-#' environment variable.
+#' environment variable, which is read on every use. There is no assignment
+#' here: the name is an active binding, made in `.onLoad()`.
 #'
+#' @name BENCHMARK_DATA_DIR
 #' @export
-BENCHMARK_DATA_DIR <- Sys.getenv("MSSTATS_BENCHMARK_DATA", "benchmark_data")
+NULL
 
 #' Load a registered benchmark test dataset
 #'

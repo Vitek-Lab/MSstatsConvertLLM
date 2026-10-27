@@ -15,6 +15,6 @@
 # data.table uses non-standard evaluation, so the column names referenced bare
 # inside `[...]` would otherwise trip R CMD check's "no visible binding" note.
 utils::globalVariables(c(
-  "Intensity", "PrecursorCharge", "ProductCharge", "Qvalue",
-  "PeptideSequence", "ProteinName", "N"
+  ".", "Intensity", "PrecursorCharge", "ProductCharge", "Qvalue",
+  "PeptideSequence", "ProteinName", "Run", "N"
 ))

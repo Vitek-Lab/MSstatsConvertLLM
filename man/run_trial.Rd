@@ -11,7 +11,8 @@ run_trial(
   acquisition = NULL,
   allow_transforms = FALSE,
   n_preview = 3,
-  use_structured = TRUE
+  use_structured = TRUE,
+  source = "fixture"
 )
 }
 \arguments{
@@ -30,6 +31,8 @@ run_trial(
 
 \item{use_structured}{Use \code{chat_structured()} (\code{TRUE}) or raw \code{chat()}
 (\code{FALSE}).}
+
+\item{source}{\code{"fixture"} or \code{"benchmark"}, passed to \code{\link[=load_test_dataset]{load_test_dataset()}}.}
 }
 \value{
 A list with \code{model}, \code{tool}, \code{prompt}, \code{mapping} (parsed),
