@@ -16,3 +16,14 @@
 ^\.github$
 ^scratchpad$
 ^benchmark_data$
+^paper-writing-guidance\.md$
+^MSstats_.*\.log$
+^downstream\.R$
+^compare_puyvelde2022\.R$
+^compare_pxd005642\.R$
+^compare_solivais\.R$
+^figure4_downstream\.R$
+^results_tables\.R$
+^diagnose_pd_intensity\.R$
+^stochasticity\.R$
+^acquisition_check\.R$

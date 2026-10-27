@@ -26,8 +26,11 @@ Imports:
 Suggests:
     MSstats,
     ggplot2,
+    knitr,
+    rmarkdown,
     stringr,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 biocViews: Proteomics, MassSpectrometry, Preprocessing, Software
 RoxygenNote: 8.0.0
 Roxygen: list(markdown = TRUE)
