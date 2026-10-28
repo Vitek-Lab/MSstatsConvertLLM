@@ -1,0 +1,224 @@
+---
+title: "2. Converting the output of a tool without a converter"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{2. Converting the output of a tool without a converter}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+MSstatsConvert does not provide a converter for AlphaPept. This vignette shows
+the recommended workflow for such a tool: a language model proposes the
+mapping to the MSstats format, the user checks it, and MSstatsConvert converts
+the data for the analysis with MSstats. The mapping was obtained once and
+saved, so the vignette runs without a language model, an API key or a network
+connection.
+
+```{r setup, message = FALSE}
+library(MSstatsConvertLLM)
+library(data.table)
+```
+
+# The export
+
+We use the AlphaPept output of the ProteoBench benchmark for label-free
+DDA, a subset of the three-species mixture of Van Puyvelde et al.
+(2022). Human, yeast and *E. coli* proteins are mixed in two proportions,
+conditions A and B, with three runs each. The source, the license and the
+design of the file are described in `inst/extdata/README`.
+
+```{r export}
+input <- fread(system.file("extdata", "AlphaPept_subset.csv",
+                           package = "MSstatsConvertLLM"))
+annotation <- fread(system.file("extdata", "AlphaPept_annotation.csv",
+                                package = "MSstatsConvertLLM"))
+str(input)
+annotation
+```
+
+# Inferring the mapping
+
+`infer_mapping()` sends the column names and three example rows of the export
+to the model, and returns the mapping that the model proposes. We obtained the
+saved mapping with the call below, using deepseek-r1-14b and the filter-aware
+prompt, after one discarded call. The script
+`inst/scripts/make_new_format_mapping.R` repeats it.
+
+```{r infer-live, eval = FALSE}
+mapping <- infer_mapping(input, "deepseek-r1-14b", "filter_aware",
+                         acquisition = "DDA")
+```
+
+Here, we read the saved mapping instead.
+
+```{r infer-saved}
+path <- system.file("extdata", "new_format_mapping.rds",
+                    package = "MSstatsConvertLLM")
+if (!nzchar(path)) {
+  stop("The saved mapping inst/extdata/new_format_mapping.rds is missing. ",
+       "Build it with Ollama running and deepseek-r1-14b pulled:\n",
+       "  Rscript inst/scripts/make_new_format_mapping.R\n",
+       "then reinstall the package.", call. = FALSE)
+}
+mapping <- readRDS(path)
+```
+
+# The proposed mapping
+
+The mapping gives, for each MSstats field, the column that the model chose and
+its confidence. The export has no fragment ion, product charge or Q-value
+column, so the model left these fields empty, with a confidence of zero.
+
+```{r mapping}
+proposed <- as.data.frame(mapping$mappings)
+proposed[, c("field", "from", "confidence")]
+```
+
+# Checking the mapping
+
+Before converting, check three choices, in this order: the intensity column,
+the peptide sequence and the filters. The intensity must be
+a quantitative column of the export, here `ms1_int_sum_apex_dn`. The peptide
+sequence must be the modified sequence `sequence` rather than the stripped
+sequence `sequence_naked`, since otherwise the modified and unmodified forms
+of a peptide are merged into one feature. The two columns differ on the rows
+shown below.
+
+```{r check-fields}
+chosen <- setNames(proposed$from, proposed$field)
+numeric_columns <- names(input)[vapply(input, is.numeric, TRUE)]
+
+c(intensity = chosen[["Intensity"]], peptide = chosen[["PeptideSequence"]])
+numeric_columns
+head(unique(input[sequence != sequence_naked, .(sequence_naked, sequence)]), 3)
+```
+
+The model proposed one filter, which keeps the rows that are not decoys.
+
+```{r check-filters}
+if (NROW(mapping$filters) > 0) {
+  as.data.frame(mapping$filters)[, c("column", "operation", "value")]
+} else {
+  "no filters proposed"
+}
+```
+
+The decoy filter is applied by default. It sets the intensities of the decoy
+matches to missing, and since a decoy feature is then missing in every run,
+MSstats drops it. To keep the decoys, for example to inspect them, drop the
+filter from the mapping. Decoy features are usually measured in few runs, so
+the conversion must also keep features with few measurements.
+
+```{r keep-decoys}
+with_decoys <- mapping
+with_decoys$filters <- subset(as.data.frame(mapping$filters), column != "decoy")
+NROW(with_decoys$filters)
+```
+
+```{r keep-decoys-convert, eval = FALSE}
+converted_with_decoys <- LLMtoMSstatsFormat(input = input, annotation = annotation,
+                                            llm_mapping = with_decoys,
+                                            removeFewMeasurements = FALSE,
+                                            use_log_file = FALSE, verbose = FALSE)
+```
+
+# Changing a field by hand
+
+The mapping is a data frame, so you can change any field before converting.
+Here the model already chose the modified sequence, so the line below changes
+nothing, but it shows how to correct the field if the model had chosen the
+stripped sequence.
+
+```{r fix}
+mapping$mappings$from[mapping$mappings$field == "PeptideSequence"] <- "sequence"
+mapping$mappings[mapping$mappings$field == "PeptideSequence", c("field", "from")]
+```
+
+# Validating the mapping
+
+`validate_mapping()` checks the mapping itself, for example that no column is
+assigned to two fields and that no required field is missing.
+
+```{r validate}
+validation <- validate_mapping(mapping)
+validation$passed
+validation$issues
+```
+
+# Saving the checked mapping
+
+We recommend saving the checked mapping and publishing it with the analysis.
+It records how the data were converted, even after the model changes.
+
+```{r save-mapping}
+mapping_file <- file.path(tempdir(), "AlphaPept_mapping.json")
+jsonlite::write_json(mapping, mapping_file, auto_unbox = TRUE, pretty = TRUE)
+file.exists(mapping_file)
+```
+
+# Converting
+
+`LLMtoMSstatsFormat()` applies the mapping and the annotation, and runs the
+same processing steps as the hand-written converters of MSstatsConvert.
+
+```{r convert, message = FALSE, warning = FALSE}
+converted <- LLMtoMSstatsFormat(input = input, annotation = annotation,
+                                llm_mapping = mapping,
+                                use_log_file = FALSE, verbose = FALSE)
+head(converted, 3)
+```
+
+The `diagnostics` attribute lists the proposed filters that were applied and
+those that were skipped, and any column named in the mapping that does not
+exist in the export.
+
+```{r diagnostics}
+diagnostics <- attr(converted, "diagnostics")
+diagnostics$applied_filters
+diagnostics$skipped_filters
+diagnostics$hallucinated_columns
+```
+
+# Differential abundance analysis
+
+The converted table is in the MSstats format, so `dataProcess()` and
+`groupComparison()` take it without further changes.
+
+```{r dataprocess, message = FALSE, warning = FALSE, results = "hide"}
+processed <- MSstats::dataProcess(converted, use_log_file = FALSE)
+contrast <- matrix(c(-1, 1), nrow = 1,
+                   dimnames = list("B-A", c("A", "B")))
+compared <- MSstats::groupComparison(contrast, processed, use_log_file = FALSE)
+```
+
+```{r results}
+head(compared$ComparisonResult[, c("Protein", "log2FC", "adj.pvalue")], 3)
+```
+
+Since the species are mixed in known proportions, the expected log2 fold
+changes of condition B against condition A are 0 for human, -1 for yeast and
++2 for *E. coli*. The median fold changes estimated from the converted table
+are close to these values.
+
+```{r species}
+result <- as.data.table(compared$ComparisonResult)
+result[, species := fcase(grepl("_HUMAN", Protein), "HUMAN",
+                          grepl("_YEAST", Protein), "YEAST",
+                          grepl("_ECOLI", Protein), "ECOLI",
+                          default = "other")]
+result[!is.na(log2FC), .(proteins = .N, median_log2FC = round(median(log2FC), 2)),
+       by = species][order(species)]
+```
+
+# Session information
+
+```{r sessioninfo}
+sessionInfo()
+```

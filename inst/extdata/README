@@ -1,0 +1,71 @@
+Files distributed with MSstatsConvertLLM
+========================================
+
+AlphaPept_subset.csv
+AlphaPept_annotation.csv
+--------------------------------------------------------------------------
+
+AlphaPept output for the example in the vignette "2. Converting the output
+of a tool without a converter". MSstatsConvert has no AlphaPept converter, so
+the vignette converts this file with a mapping proposed by a language model.
+
+Source
+  ProteoBench, file test/data/quant/quant_lfq_ion_DDA_QExactive/
+  AlphaPept_subset.csv.
+  https://github.com/Proteobench/ProteoBench
+  Retrieved 27 October 2026.
+
+License
+  The ProteoBench repository, including this file, is distributed under the
+  Apache License 2.0. https://www.apache.org/licenses/LICENSE-2.0
+
+Underlying measurements
+  A Q Exactive HF-X DDA subset of the mixed-species LFQ benchmark of
+
+    Van Puyvelde, B. et al. A comprehensive LFQ benchmark dataset on modern
+    day acquisition strategies in proteomics. Scientific Data 9, 126 (2022).
+    https://doi.org/10.1038/s41597-022-01216-6
+
+  deposited in PRIDE as PXD028735. The article is open access under CC BY 4.0.
+
+Experimental design
+  Human, yeast and E. coli digests are mixed in two proportions, conditions A
+  and B. ProteoBench uses the first biological replicate series, "alpha",
+  with three technical replicates of each condition, six runs in all. Human is
+  present in equal amounts in both conditions, yeast is twice as abundant in
+  A, and E. coli is four times as abundant in B, so the expected log2 fold
+  changes of B against A are 0, -1 and +2.
+
+  AlphaPept_annotation.csv lists the six runs. Each run has its own
+  BioReplicate, so MSstats compares A with B across the three runs of each
+  condition, as ProteoBench does. The BioReplicate labels include the
+  condition, since a BioReplicate that appears in both conditions would make
+  MSstats treat the design as paired.
+
+Subset
+  To keep the package small, the subset contains every row of a protein seen
+  in at least four of the six runs, and every row flagged as a decoy, which a
+  filter-aware prompt should find. This leaves 7,106 of the 9,814 rows, 462
+  proteins and all 44 decoy rows, in 851 kB. The columns are unchanged.
+
+  Rebuild with: Rscript inst/scripts/make_new_format_data.R
+
+new_format_mapping.rds
+--------------------------------------------------------------------------
+
+The mapping that deepseek-r1-14b returned for AlphaPept_subset.csv under the
+filter_aware prompt. It was obtained once, with Ollama on a local computer,
+and is distributed so that the vignette runs without a language model.
+
+  Rebuild with: Rscript inst/scripts/make_new_format_mapping.R
+
+raw_trials_benchmark_20261007_163702.rds
+downstream_panels.rds
+benchmark_columns.rds
+--------------------------------------------------------------------------
+
+The saved results read by the vignette "1. Reproducing the benchmark of models
+and prompts": the 288 benchmark trials, the per-protein adjusted p-values of
+the differential abundance comparisons in the manuscript, and the column
+names of each public dataset. They were produced from the runs in results/ by
+inst/scripts/make_extdata.R.
