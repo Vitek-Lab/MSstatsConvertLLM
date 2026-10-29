@@ -258,6 +258,10 @@ local models were run at temperature 0 with a fixed seed. Ollama reuses the
 cached beginning of the previous request, so the first call after a change of
 prompt can differ from the following calls, and it is discarded.
 
+The filter prompts in the package now state that each filter describes the rows
+to keep. To rerun the benchmark exactly as in the manuscript, use the prompts of
+the tag benchmark-2026-10.
+
 ```{r ollama-settings, eval = FALSE}
 # create_chat() passes these settings to ellmer. MSSTATS_OLLAMA_URL is read on
 # every use, so it can be set after the package is attached.
