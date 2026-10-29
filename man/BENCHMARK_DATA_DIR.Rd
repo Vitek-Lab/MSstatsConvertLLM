@@ -3,10 +3,12 @@
 \name{BENCHMARK_DATA_DIR}
 \alias{BENCHMARK_DATA_DIR}
 \title{Directory holding the deposited benchmark datasets}
+\usage{
+BENCHMARK_DATA_DIR
+}
 \description{
 Holds the files named in the Experimental Datasets table, truncated to
 their first rows. The model sees a three-row preview, so the truncation
 does not change its input. Override with the \code{MSSTATS_BENCHMARK_DATA}
-environment variable, which is read on every use. There is no assignment
-here: the name is an active binding, made in \code{.onLoad()}.
+environment variable.
 }

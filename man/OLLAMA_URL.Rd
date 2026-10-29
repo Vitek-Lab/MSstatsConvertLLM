@@ -3,10 +3,11 @@
 \name{OLLAMA_URL}
 \alias{OLLAMA_URL}
 \title{Base URL for the Ollama server}
+\usage{
+OLLAMA_URL
+}
 \description{
 Defaults to a local Ollama instance. Set the \code{MSSTATS_OLLAMA_URL}
 environment variable to point at a remote server, for example an SSH
-tunnel to a GPU node. The variable is read on every use, so it can be set
-after the package is attached. There is no assignment here: the name is an
-active binding, made in \code{.onLoad()}.
+tunnel to a GPU node.
 }
