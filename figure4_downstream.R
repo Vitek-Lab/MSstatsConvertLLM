@@ -15,22 +15,22 @@ suppressPackageStartupMessages({
 # One panel per mapping choice, in the order the Results text discusses them.
 panels <- list(
   list(run = "downstream_puyvelde2022_reference_ProteinName_PG.ProteinNames",
-       choice = "(a) Mnemonics instead of accessions",
+       choice = "(a) Mnemonics",
        data = "Spectronaut"),
   list(run = "downstream_solivais_llama3.1-8b_lean",
-       choice = "(b) Unmodified peptide sequence",
+       choice = "(b) Unmodified",
        data = "MetaMorpheus"),
   list(run = "downstream_puyvelde2022_reference_Intensity_F.NormalizedPeakArea",
-       choice = "(c) Normalized peak area",
+       choice = "(c) Normalized area",
        data = "Spectronaut"),
   list(run = "downstream_pxd005642_llama3.1-8b_constrained_v3",
-       choice = "(d) Intensity instead of peak area",
+       choice = "(d) Intensity",
        data = "Proteome Discoverer"),
   list(run = "downstream_puyvelde2022_reference_nofilters",
-       choice = "(e) No filtering or censoring",
+       choice = "(e) No filtering",
        data = "Spectronaut"),
   list(run = "downstream_pxd005642_deepseek-r1-14b_filter_aware",
-       choice = "(f) Additional quality filters",
+       choice = "(f) Extra filters",
        data = "Proteome Discoverer")
 )
 CAP   <- 20      # cap -log10(adjusted p) for display only; stated in the caption
@@ -69,8 +69,10 @@ for (p in panels) {
 
 d   <- rbindlist(points)
 ann <- rbindlist(counts)
-# Titles wrap to fit a third of the page width; the tool gets its own line
-ann[, strip := sprintf("%s\n%s", vapply(strwrap(panel, 40, simplify = FALSE), paste, "", collapse = "\n"), data)]
+# Two lines: the choice in bold, the tool below it in regular. Markdown rather
+# than plotmath, because plotmath's atop() centres the two lines against each
+# other and these have to stay flush left.
+ann[, strip := sprintf("**%s**<br>%s", panel, data)]
 d <- merge(d, ann[, .(panel, strip)], by = "panel")
 d[, strip := factor(strip, levels = ann$strip)]
 
@@ -88,13 +90,19 @@ g <- ggplot(d, aes(x, y, colour = truth)) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2))) +
   labs(x = "-log10 adjusted p-value, hand-written converter",
        y = "-log10 adjusted p-value, LLM-based converter") +
-  theme_minimal(base_size = 8.5) +
+  # Every text prints at 12 pt at the 6.5 in width the paper places this at.
+  # base_size sets the axis titles; the tick labels, panel titles and legend
+  # would default to 0.8 of it, so they are set to 12 pt in their own right.
+  theme_minimal(base_size = 12) +
   theme(legend.position = "bottom",
-        strip.text = element_text(hjust = 0, face = "bold", lineheight = 1.05),
+        axis.text = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        strip.text = ggtext::element_markdown(hjust = 0, lineheight = 1.05,
+                                              size = 12),
         panel.grid.minor = element_blank())
 
-ggsave("results/Figure4_downstream.pdf", g, width = 7.2, height = 6.8)
-ggsave("results/Figure4_downstream.png", g, width = 7.2, height = 6.8, dpi = 200)
+ggsave("results/Figure4_downstream.pdf", g, width = 6.5, height = 6.0)
+ggsave("results/Figure4_downstream.png", g, width = 6.5, height = 6.0, dpi = 200)
 
 cat("\n=== Figure 4 counts (paste these back) ===\n")
 print(ann[, .(run, conv_sig, conv_true, conv_false, llm_sig, llm_true, llm_false, disagree, disagree_near)])
