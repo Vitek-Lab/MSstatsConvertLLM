@@ -171,6 +171,13 @@ TOOL_TRANSFORMS <- list(
 #' @export
 BENCHMARK_DATA_DIR <- Sys.getenv("MSSTATS_BENCHMARK_DATA", "benchmark_data")
 
+# The directory the loader actually reads. It is looked up on each call, so
+# MSSTATS_BENCHMARK_DATA can change without reinstalling the package.
+# BENCHMARK_DATA_DIR above is fixed when the package is installed, which
+# silently pinned the directory after a reinstall; it stays only for scripts
+# that read it.
+.benchmark_data_dir <- function() Sys.getenv("MSSTATS_BENCHMARK_DATA", "benchmark_data")
+
 #' Load a registered benchmark test dataset
 #'
 #' Reads a proteomics tool's output and normalizes its column headers. Two
@@ -209,13 +216,13 @@ load_test_dataset <- function(tool_name, source = c("fixture", "benchmark")) {
     ),
     benchmark = list(
       spectronaut = file.path(
-        BENCHMARK_DATA_DIR, "Puyvelde2022_Spectronaut_Report-001.tsv"
+        .benchmark_data_dir(), "Puyvelde2022_Spectronaut_Report-001.tsv"
       ),
       proteome_discoverer = file.path(
-        BENCHMARK_DATA_DIR, "PXD005642_PD_input.csv"
+        .benchmark_data_dir(), "PXD005642_PD_input.csv"
       ),
       metamorpheus = file.path(
-        BENCHMARK_DATA_DIR, "Solivais2024_QuantifiedPeaks.tsv"
+        .benchmark_data_dir(), "Solivais2024_QuantifiedPeaks.tsv"
       )
     )
   )
