@@ -90,19 +90,22 @@ g <- ggplot(d, aes(x, y, colour = truth)) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2))) +
   labs(x = "-log10 adjusted p-value, hand-written converter",
        y = "-log10 adjusted p-value, LLM-based converter") +
-  # Every text prints at 12 pt at the 6.5 in width the paper places this at.
+  # Every text prints at 9 pt at the 6.5 in width the paper places this at.
   # base_size sets the axis titles; the tick labels, panel titles and legend
-  # would default to 0.8 of it, so they are set to 12 pt in their own right.
-  theme_minimal(base_size = 12) +
+  # would default to 0.8 of it, so they are set to 9 pt in their own right.
+  theme_minimal(base_size = 9) +
   theme(legend.position = "bottom",
-        axis.text = element_text(size = 12),
-        legend.text = element_text(size = 12),
+        axis.text = element_text(size = 9),
+        legend.text = element_text(size = 9),
         strip.text = ggtext::element_markdown(hjust = 0, lineheight = 1.05,
-                                              size = 12),
+                                              size = 9),
         panel.grid.minor = element_blank())
 
-ggsave("results/Figure4_downstream.pdf", g, width = 6.5, height = 6.0)
-ggsave("results/Figure4_downstream.png", g, width = 6.5, height = 6.0, dpi = 200)
+# 5.54 in leaves the six panels square at this width: the rows that are not
+# panels take 1.87 in, so each of the two panel rows gets 1.84 in, the width
+# the three panel columns get once the axes have taken their 1.98 in.
+ggsave("results/Figure4_downstream.pdf", g, width = 6.5, height = 5.54)
+ggsave("results/Figure4_downstream.png", g, width = 6.5, height = 5.54, dpi = 200)
 
 cat("\n=== Figure 4 counts (paste these back) ===\n")
 print(ann[, .(run, conv_sig, conv_true, conv_false, llm_sig, llm_true, llm_false, disagree, disagree_near)])
