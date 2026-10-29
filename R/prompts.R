@@ -1,5 +1,5 @@
 # ============================================================
-# prompts.R — Prompt templates for schema inference
+# prompts.R - Prompt templates for schema inference
 # ============================================================
 
 # ------------------------------------------------------------------
@@ -12,14 +12,14 @@ You are a proteomics data converter. Your task is to map column names
 from an input dataset to the MSstats analysis schema.
 
 MSstats requires these fields (in this exact order):
-1. ProteinName     — protein identifier (e.g., UniProt accession)
-2. PeptideSequence — peptide or modified peptide sequence
-3. PrecursorCharge — charge state of the precursor ion
-4. FragmentIon     — fragment ion label (e.g., y7, b3)
-5. ProductCharge   — charge of the fragment ion
-6. Run             — raw file name or run identifier
-7. Intensity       — quantitative signal (peak area, intensity, etc.)
-8. Qvalue          — q-value or FDR for quality filtering
+1. ProteinName     \u2014 protein identifier (e.g., UniProt accession)
+2. PeptideSequence \u2014 peptide or modified peptide sequence
+3. PrecursorCharge \u2014 charge state of the precursor ion
+4. FragmentIon     \u2014 fragment ion label (e.g., y7, b3)
+5. ProductCharge   \u2014 charge of the fragment ion
+6. Run             \u2014 raw file name or run identifier
+7. Intensity       \u2014 quantitative signal (peak area, intensity, etc.)
+8. Qvalue          \u2014 q-value or FDR for quality filtering
 
 Rules:
 - Only use column names from the DATA HEADER below.
@@ -181,30 +181,35 @@ build_user_prompt <- function(data_preview_json, acquisition = NULL,
 PROMPT_FILTER_AWARE <- "
 You are a proteomics data converter with domain expertise.
 
-TASK 1 — COLUMN MAPPING:
+TASK 1 \u2014 COLUMN MAPPING:
 Map columns from the input dataset to the MSstats analysis schema.
 
 MSstats requires these fields (in this exact order):
-1. ProteinName     — protein identifier (e.g., UniProt accession)
-2. PeptideSequence — peptide or modified peptide sequence
-3. PrecursorCharge — charge state of the precursor ion
-4. FragmentIon     — fragment ion label (e.g., y7, b3)
-5. ProductCharge   — charge of the fragment ion
-6. Run             — raw file name or run identifier
-7. Intensity       — quantitative signal (peak area, intensity, etc.)
-8. Qvalue          — q-value or FDR for quality filtering
+1. ProteinName     \u2014 protein identifier (e.g., UniProt accession)
+2. PeptideSequence \u2014 peptide or modified peptide sequence
+3. PrecursorCharge \u2014 charge state of the precursor ion
+4. FragmentIon     \u2014 fragment ion label (e.g., y7, b3)
+5. ProductCharge   \u2014 charge of the fragment ion
+6. Run             \u2014 raw file name or run identifier
+7. Intensity       \u2014 quantitative signal (peak area, intensity, etc.)
+8. Qvalue          \u2014 q-value or FDR for quality filtering
 
-TASK 2 — FILTER DISCOVERY:
+TASK 2 \u2014 FILTER DISCOVERY:
 Identify columns that should be used to FILTER rows before analysis.
 These are tool-specific quality control columns NOT part of the 8 MSstats
-fields above. Common examples in proteomics:
+fields above. Each filter is a condition on the rows to KEEP: rows that
+meet it stay, and all other rows are removed. Write the condition the good
+rows meet, never the one the rows to drop meet. To drop decoys, for example,
+write decoy flag equals FALSE. Common examples in proteomics:
 
-- Decoy/contaminant flags (e.g., columns indicating reverse sequences,
-  contaminant proteins, or decoy hits that should be removed)
-- Exclusion flags (e.g., features flagged as excluded from quantification)
-- Fragment loss type (e.g., keeping only 'noloss' fragments)
-- Score thresholds (e.g., posterior error probability, percolator scores)
-- Modification flags (e.g., filtering out unwanted PTMs)
+- Decoy/contaminant flags (e.g., keep rows whose reverse, contaminant or
+  decoy flag is FALSE)
+- Exclusion flags (e.g., keep features NOT flagged as excluded from
+  quantification)
+- Fragment loss type (e.g., keep only 'noloss' fragments)
+- Score thresholds (e.g., keep rows whose posterior error probability is
+  below a cutoff, or whose score is above one)
+- Modification flags (e.g., keep rows without unwanted PTMs)
 
 For each filter, specify:
 - \"column\": the exact column name from DATA HEADER
@@ -256,7 +261,7 @@ You are a proteomics data converter. Map column names from an input
 dataset to the MSstats schema AND identify quality-control filters.
 Return ONLY valid JSON. Do all reasoning silently.
 
-TASK 1 — COLUMN MAPPING:
+TASK 1 \u2014 COLUMN MAPPING:
 
 MSstats required fields (output in this EXACT order):
 1. ProteinName
@@ -298,15 +303,19 @@ CONFIDENCE SCORING:
 - 0.80 generic/weak match
 - 0.00 if null
 
-TASK 2 — FILTER DISCOVERY:
+TASK 2 \u2014 FILTER DISCOVERY:
 Identify columns to FILTER rows before analysis. These are QC columns
-NOT part of the 8 MSstats fields above. Look for:
+NOT part of the 8 MSstats fields above. Each filter is a condition on the
+rows to KEEP: rows that meet it stay, and all other rows are removed. Write
+the condition the good rows meet, never the one the rows to drop meet.
+Look for:
 
-- Decoy/contaminant flags (reverse sequences, contaminant proteins)
-- Exclusion flags (features excluded from quantification: remove excluded features.)
-- Fragment loss type (e.g., keeping only 'noloss' fragments)
-- Score thresholds (posterior error probability, percolator scores)
-- Modification flags (filtering out unwanted PTMs)
+- Decoy/contaminant flags (keep rows whose decoy or contaminant flag is FALSE)
+- Exclusion flags (keep features NOT excluded from quantification)
+- Fragment loss type (keep only 'noloss' fragments)
+- Score thresholds (keep rows whose posterior error probability is below a
+  cutoff, or whose score is above one)
+- Modification flags (keep rows without unwanted PTMs)
 
 For each filter, specify:
 - \"column\": exact column name from DATA HEADER
@@ -415,7 +424,7 @@ You are a proteomics data converter. Map column names from an input
 dataset to the MSstats schema AND identify quality-control filters.
 Return ONLY valid JSON. Do all reasoning silently.
 
-TASK 1 — COLUMN MAPPING:
+TASK 1 \u2014 COLUMN MAPPING:
 
 MSstats required fields (output in this EXACT order):
 1. ProteinName
@@ -460,15 +469,19 @@ CONFIDENCE SCORING:
 - 0.80 generic/weak match
 - 0.00 if null
 
-TASK 2 — FILTER DISCOVERY:
+TASK 2 \u2014 FILTER DISCOVERY:
 Identify columns to FILTER rows before analysis. These are QC columns
-NOT part of the 8 MSstats fields above. Look for:
+NOT part of the 8 MSstats fields above. Each filter is a condition on the
+rows to KEEP: rows that meet it stay, and all other rows are removed. Write
+the condition the good rows meet, never the one the rows to drop meet.
+Look for:
 
-- Decoy/contaminant flags (reverse sequences, contaminant proteins)
-- Exclusion flags (features excluded from quantification: remove excluded features.)
-- Fragment loss type (e.g., keeping only 'noloss' fragments)
-- Score thresholds (posterior error probability, percolator scores)
-- Modification flags (filtering out unwanted PTMs)
+- Decoy/contaminant flags (keep rows whose decoy or contaminant flag is FALSE)
+- Exclusion flags (keep features NOT excluded from quantification)
+- Fragment loss type (keep only 'noloss' fragments)
+- Score thresholds (keep rows whose posterior error probability is below a
+  cutoff, or whose score is above one)
+- Modification flags (keep rows without unwanted PTMs)
 
 For each filter, specify:
 - \"column\": exact column name from DATA HEADER

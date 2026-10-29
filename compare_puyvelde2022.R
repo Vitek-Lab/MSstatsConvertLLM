@@ -6,8 +6,8 @@
 # between conditions and are true positives. Three biological samples per
 # condition, each measured three times.
 #
-# Settings follow the data owner's analysis (code-tony.R): converter defaults,
-# dataProcess with normalization off, one A against B contrast. The report is
+# Converter defaults, dataProcess with medians equalized (the setting used on
+# all three datasets), one A against B contrast. The report is
 # first cut on Explorer to the columns the converters read. The shared
 # machinery is in downstream.R.
 #
@@ -17,6 +17,7 @@
 #   LLM_MODEL=llama3.1-8b LLM_PROMPT=constrained_v3 N_CORES=2 caffeinate -i Rscript compare_puyvelde2022.R
 #   LLM_MODEL=reference REF_SWAP=Intensity=F.NormalizedPeakArea N_CORES=2 caffeinate -i Rscript compare_puyvelde2022.R
 #   LLM_MODEL=reference REF_SWAP=ProteinName=PG.ProteinNames N_CORES=2 caffeinate -i Rscript compare_puyvelde2022.R
+#   LLM_MODEL=reference REF_FILTERS=none N_CORES=2 caffeinate -i Rscript compare_puyvelde2022.R
 # ============================================================
 
 source("downstream.R")
@@ -87,14 +88,8 @@ species_of <- function(p) {
   fcase(s == "HUMAN", "HUMAN", s %in% c("YEAST", "ECOLI"), "SPIKED", default = "OTHER")
 }
 
-# NORM=1 repeats the comparison with MSstats' default normalization
-# (equalizeMedians) in separate result folders, to check whether a choice
-# that differs under the data owner's settings is equivalent under defaults.
-NORM <- identical(Sys.getenv("NORM"), "1")
-
 res <- run_downstream(list(
-  dataset = if (NORM) "Puyvelde2022, default normalization" else "Puyvelde2022",
-  slug = if (NORM) "puyvelde2022_norm" else "puyvelde2022",
+  dataset = "Puyvelde2022", slug = "puyvelde2022",
   label = chosen$label, description = chosen$description, mapping = chosen$mapping,
   # Read here so the list holds the only copy, which the engine frees after converting
   raw = fread(REPORT, showProgress = FALSE),
@@ -102,7 +97,7 @@ res <- run_downstream(list(
   hand_convert = function(x, a) SpectronauttoMSstatsFormat(x, annotation = a, use_log_file = FALSE),
   species_of = species_of, protein_key = protein_key,
   positive = "SPIKED", negative = "HUMAN",
-  dp_args = if (NORM) list() else list(normalization = FALSE),
+  dp_args = list(normalization = "equalizeMedians"),
   build_contrast = function(levs) {
     if (!setequal(levs, c("A", "B"))) stop("Unexpected conditions: ", paste(levs, collapse = ", "))
     matrix(c(1, -1)[match(levs, c("A", "B"))], nrow = 1, dimnames = list("A-B", levs))

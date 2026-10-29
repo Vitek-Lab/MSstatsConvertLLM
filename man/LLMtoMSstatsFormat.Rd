@@ -6,13 +6,14 @@
 \usage{
 LLMtoMSstatsFormat(
   input,
-  annotation,
+  annotation = NULL,
   llm_mapping,
   useUniquePeptide = TRUE,
   removeFewMeasurements = TRUE,
   removeProtein_with1Peptide = FALSE,
   summaryforMultipleRows = max,
-  qvalue_cutoff = 0.05,
+  filter_with_Qvalue = FALSE,
+  qvalue_cutoff = 0.01,
   use_log_file = TRUE,
   append = FALSE,
   verbose = TRUE,
@@ -22,7 +23,8 @@ LLMtoMSstatsFormat(
 \arguments{
 \item{input}{data.table of raw tool output}
 
-\item{annotation}{data.table with Run, Condition, BioReplicate columns}
+\item{annotation}{data.table with Run, Condition, BioReplicate columns, or
+NULL to extract them from \code{input}}
 
 \item{llm_mapping}{list — parsed LLM output with $mappings and optionally $filters}
 
@@ -34,8 +36,10 @@ LLMtoMSstatsFormat(
 
 \item{summaryforMultipleRows}{function for summarizing multiple PSMs (default max)}
 
-\item{qvalue_cutoff}{numeric, keep only rows with Qvalue < cutoff (default 0.05).
-Set to NULL to disable. Rows with NA Qvalue are retained.}
+\item{filter_with_Qvalue}{logical (default FALSE, as in the converters). TRUE
+fills intensities above \code{qvalue_cutoff} with NA, treated as censored.}
+
+\item{qvalue_cutoff}{numeric (default 0.01, as in the converters)}
 
 \item{use_log_file}{logical (default TRUE)}
 

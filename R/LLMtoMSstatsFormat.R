@@ -258,9 +258,11 @@ LLMtoMSstatsFormat <- function(
     columns_to_fill = columns_to_fill
   )
   
-  # Zero intensities become missing here, after preprocessing, as in the
-  # converters. Preprocessing can turn intensities below 1 into zero, so
-  # doing it any earlier would miss those.
+  # Zero intensities become missing here, after preprocessing, as in
+  # SpectronauttoMSstatsFormat. Preprocessing can turn intensities below 1
+  # into zero, so doing it any earlier would miss those. The label-free PD
+  # and MetaMorpheus converters keep zeros; the downstream comparison sets
+  # the hand-written MetaMorpheus zeros to NA (the PD data has none).
   input[, Intensity := ifelse(Intensity == 0, NA_real_, Intensity)]
 
   input <- MSstatsConvert::MSstatsBalancedDesign(
@@ -471,7 +473,7 @@ LLMtoMSstatsFormat <- function(
     }
   
     if (verbose) {
-      message(sprintf("  Filter registered: %s %s %s", col, op, val))
+      message(sprintf("  Filter registered, keeping rows where %s %s %s", col, op, val))
     }
   }
   
