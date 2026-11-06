@@ -129,6 +129,8 @@ print_mapping <- function(m) {
 # a filter-free saved mapping and replaces every column with the converter's.
 # REF_SWAP=Field=Column changes exactly one reference column, so a single
 # choice can be tested with everything else held at the converter's defaults.
+# REF_FILTERS=none drops the converter's built-in filters from the reference,
+# so no row is removed or blanked on their account.
 choose_mapping <- function(tool, reference_columns, reference_filters = NULL,
                            template = c(model = "llama3.1-8b", prompt = "constrained_v3")) {
   model  <- Sys.getenv("LLM_MODEL",  "deepseek-r1-14b")
@@ -146,6 +148,11 @@ choose_mapping <- function(tool, reference_columns, reference_filters = NULL,
       cols[[kv[1]]] <- kv[2]
       label <- sprintf("reference_%s_%s", kv[1], kv[2])
       description <- sprintf("reference mapping with %s from %s", kv[1], kv[2])
+    }
+    if (identical(Sys.getenv("REF_FILTERS"), "none")) {
+      reference_filters <- NULL
+      label <- paste0(label, "_nofilters")
+      description <- paste0(description, ", with no filters")
     }
     say("1. Mapping: %s", description)
     m <- reference_mapping(saved_mapping(template[["model"]], tool, template[["prompt"]]),

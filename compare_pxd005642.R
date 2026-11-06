@@ -82,7 +82,7 @@ res <- run_downstream(list(
   # unmodified rows match; the modified ones are what the LLM path merges.
   sequence_key = function(s) sub("_$", "", s),
   positive = "SPIKED", negative = "ECOLI",
-  dp_args = list(featureSubset = "topN", n_top_feature = 3),
+  dp_args = list(normalization = "equalizeMedians", featureSubset = "topN", n_top_feature = 3),
   build_contrast = function(levs) {
     need <- paste0("Condition", 1:5)
     if (!setequal(levs, need)) stop("Unexpected conditions: ", paste(levs, collapse = ", "))
