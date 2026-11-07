@@ -1,13 +1,25 @@
 Files distributed with MSstatsConvertLLM
 ========================================
 
+raw_trials_benchmark_20261007_163702.rds
+downstream_panels.rds
+benchmark_columns.rds
+--------------------------------------------------------------------------
+
+The saved results read by the vignette "1. Reproducing the benchmark of models
+and prompts": the 288 benchmark trials, the per-protein adjusted p-values of
+the differential abundance comparisons in the manuscript, and the column
+names of each public dataset. They were produced from the runs in results/ by
+inst/scripts/make_benchmark_data.R.
+
 AlphaPept_subset.csv
 AlphaPept_annotation.csv
 --------------------------------------------------------------------------
 
 AlphaPept output for the example in the vignette "2. Converting the output
 of a tool without a converter". MSstatsConvert has no AlphaPept converter, so
-the vignette converts this file with a mapping proposed by a language model.
+the vignette converts this file with a conversion specification proposed by a
+language model.
 
 Source
   ProteoBench, file test/data/quant/quant_lfq_ion_DDA_QExactive/
@@ -48,24 +60,14 @@ Subset
   filter-aware prompt should find. This leaves 7,106 of the 9,814 rows, 462
   proteins and all 44 decoy rows, in 851 kB. The columns are unchanged.
 
-  Rebuild with: Rscript inst/scripts/make_new_format_data.R
+  Rebuild with: Rscript inst/scripts/make_alphapept_data.R
 
-new_format_mapping.rds
+alphapept_specification.rds
 --------------------------------------------------------------------------
 
-The mapping that deepseek-r1-14b returned for AlphaPept_subset.csv under the
-filter_aware prompt. It was obtained once, with Ollama on a local computer,
-and is distributed so that the vignette runs without a language model.
+The conversion specification that deepseek-r1-14b returned for
+AlphaPept_subset.csv under the filter_aware prompt. It was obtained once, with
+Ollama on a local computer, and is distributed so that the vignette runs
+without a language model.
 
-  Rebuild with: Rscript inst/scripts/make_new_format_mapping.R
-
-raw_trials_benchmark_20261007_163702.rds
-downstream_panels.rds
-benchmark_columns.rds
---------------------------------------------------------------------------
-
-The saved results read by the vignette "1. Reproducing the benchmark of models
-and prompts": the 288 benchmark trials, the per-protein adjusted p-values of
-the differential abundance comparisons in the manuscript, and the column
-names of each public dataset. They were produced from the runs in results/ by
-inst/scripts/make_extdata.R.
+  Rebuild with: Rscript inst/scripts/make_alphapept_specification.R

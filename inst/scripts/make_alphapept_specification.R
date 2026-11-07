@@ -1,9 +1,9 @@
-# make_new_format_mapping.R - infer the mapping the new-format vignette reads
+# make_alphapept_specification.R - infer the mapping the new-format vignette reads
 #
 # Needs Ollama running and deepseek-r1-14b pulled. Run from the repository
-# root, after inst/scripts/make_new_format_data.R has written the subset:
+# root, after inst/scripts/make_alphapept_data.R has written the subset:
 #
-#   Rscript inst/scripts/make_new_format_mapping.R
+#   Rscript inst/scripts/make_alphapept_specification.R
 #
 # Point MSSTATS_OLLAMA_URL at the server if it is not on localhost:11434.
 
@@ -15,7 +15,7 @@ suppressPackageStartupMessages({
 MODEL  <- "deepseek-r1-14b"
 PROMPT <- "filter_aware"
 INPUT  <- "inst/extdata/AlphaPept_subset.csv"
-OUTPUT <- "inst/extdata/new_format_mapping.rds"
+OUTPUT <- "inst/extdata/alphapept_specification.rds"
 
 stopifnot(file.exists(INPUT))
 input <- fread(INPUT)
@@ -27,10 +27,10 @@ cat(sprintf("Ollama at %s, model %s, prompt %s\n", OLLAMA_URL, MODEL, PROMPT))
 # every call after it. Make it and throw it away, so what gets saved is a
 # settled answer.
 cat("Warm-up call, discarded ...\n")
-invisible(infer_mapping(input, MODEL, PROMPT, acquisition = "DDA"))
+invisible(infer_specification(input, MODEL, PROMPT, acquisition = "DDA"))
 
 cat("Inferring the mapping ...\n")
-mapping <- infer_mapping(input, MODEL, PROMPT, acquisition = "DDA")
+mapping <- infer_specification(input, MODEL, PROMPT, acquisition = "DDA")
 
 cat(sprintf("Model took %.1f s\n", attr(mapping, "elapsed_sec")))
 print(as.data.frame(mapping$mappings)[, c("field", "from")])

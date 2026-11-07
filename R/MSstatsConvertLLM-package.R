@@ -3,8 +3,9 @@
 #' Uses locally-hosted large language models to map arbitrary proteomics tool
 #' output onto the MSstats analysis schema, then feeds that mapping into the
 #' MSstatsConvert pipeline via [LLMtoMSstatsFormat()]. Also provides a
-#' benchmarking harness ([run_trial()], [score_trial()], [print_scorecard()])
-#' for evaluating model / prompt combinations against curated ground truth.
+#' benchmarking harness ([run_benchmark_trial()], [score_trial()],
+#' [print_scorecard()]) for evaluating model / prompt combinations against
+#' curated ground truth.
 #'
 #' @keywords internal
 #' @import data.table

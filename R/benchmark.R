@@ -59,10 +59,10 @@ create_chat <- function(model_key) {
 #' Infer an MSstats mapping for a table of tool output
 #'
 #' Builds the data preview, asks a model to map the columns onto the MSstats
-#' schema, and returns the parsed mapping. This is the step [run_trial()]
-#' performs, without the benchmark bookkeeping: call it directly on the output
-#' of a tool that has no converter of its own, then pass the result to
-#' [LLMtoMSstatsFormat()].
+#' schema, and returns the parsed mapping. This is the step
+#' [run_benchmark_trial()] performs, without the benchmark bookkeeping: call it
+#' directly on the output of a tool that has no converter of its own, then pass
+#' the result to [LLMtoMSstatsFormat()].
 #'
 #' @param data A data frame of raw tool output. Only its column names and the
 #'   first `n_preview` rows are sent to the model.
@@ -76,19 +76,19 @@ create_chat <- function(model_key) {
 #'   (`FALSE`).
 #' @return The parsed mapping: a list with `mappings`, `confidence`, `notes`
 #'   and `warnings`, plus `filters` for a filter-aware prompt. This is the
-#'   object [run_trial()] returns as its `mapping` element and the one
+#'   object [run_benchmark_trial()] returns as its `mapping` element and the one
 #'   [LLMtoMSstatsFormat()] takes as `llm_mapping`. How long the model took is
 #'   attached as the `elapsed_sec` attribute.
 #' @details Requires the optional `ellmer` package and a running model backend
 #'   (e.g. Ollama).
 #' @export
-infer_mapping <- function(data,
-                          model_key,
-                          prompt_key = "constrained",
-                          acquisition = NULL,
-                          n_preview = 3,
-                          allow_transforms = FALSE,
-                          use_structured = TRUE) {
+infer_specification <- function(data,
+                                model_key,
+                                prompt_key = "constrained",
+                                acquisition = NULL,
+                                n_preview = 3,
+                                allow_transforms = FALSE,
+                                use_structured = TRUE) {
 
   preview <- make_json_preview(data, n_rows = n_preview)
   system_prompt <- PROMPT_VERSIONS[[prompt_key]]
@@ -169,24 +169,25 @@ infer_mapping <- function(data,
 #' @return A list with `model`, `tool`, `prompt`, `mapping` (parsed),
 #'   `validation`, `elapsed_sec`, and `timestamp`.
 #' @export
-run_trial <- function(model_key,
-                      tool_name,
-                      prompt_key = "constrained",
-                      acquisition = NULL,
-                      allow_transforms = FALSE,
-                      n_preview  = 3,
-                      use_structured = TRUE,
-                      source = "fixture") {
+run_benchmark_trial <- function(model_key,
+                                tool_name,
+                                prompt_key = "constrained",
+                                acquisition = NULL,
+                                allow_transforms = FALSE,
+                                n_preview  = 3,
+                                use_structured = TRUE,
+                                source = "fixture") {
   
-  # Load the data, then infer the mapping. The time infer_mapping() reports is
-  # the model call alone, measured where it was measured here before; it rides
-  # back on the result and comes off again, so `mapping` is the bare object.
+  # Load the data, then infer the mapping. The time infer_specification()
+  # reports is the model call alone, measured where it was measured here before;
+  # it rides back on the result and comes off again, so `mapping` is the bare
+  # object.
   df <- load_test_dataset(tool_name, source = source)
-  result <- infer_mapping(df, model_key, prompt_key,
-                          acquisition      = acquisition,
-                          n_preview        = n_preview,
-                          allow_transforms = allow_transforms,
-                          use_structured   = use_structured)
+  result <- infer_specification(df, model_key, prompt_key,
+                                acquisition      = acquisition,
+                                n_preview        = n_preview,
+                                allow_transforms = allow_transforms,
+                                use_structured   = use_structured)
   elapsed <- attr(result, "elapsed_sec")
   attr(result, "elapsed_sec") <- NULL
 
@@ -283,7 +284,7 @@ validate_mapping <- function(mapping_result) {
 
 #' Score a trial against ground truth
 #'
-#' @param trial_result A list returned by [run_trial()].
+#' @param trial_result A list returned by [run_benchmark_trial()].
 #' @return A `data.table` with one row per MSstats field: `field`, `predicted`,
 #'   `expected`, `n_acceptable`, `exact_match`, `acceptable_match`,
 #'   `candidate_hit`, `confidence`, `has_candidates`, `n_candidates`.
@@ -394,7 +395,7 @@ score_trial <- function(trial_result) {
 #' Pretty-print a scored trial to the console
 #'
 #' @param scores A `data.table` returned by [score_trial()].
-#' @param trial_result The list returned by [run_trial()].
+#' @param trial_result The list returned by [run_benchmark_trial()].
 #' @return `scores`, invisibly.
 #' @export
 print_scorecard <- function(scores, trial_result) {

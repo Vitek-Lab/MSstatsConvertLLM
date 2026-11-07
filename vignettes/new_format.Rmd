@@ -16,10 +16,10 @@ knitr::opts_chunk$set(
 
 MSstatsConvert does not provide a converter for AlphaPept. This vignette shows
 the recommended workflow for such a tool: a language model proposes the
-mapping to the MSstats format, the user checks it, and MSstatsConvert converts
-the data for the analysis with MSstats. The mapping was obtained once and
-saved, so the vignette runs without a language model, an API key or a network
-connection.
+conversion specification to the MSstats format, the user checks it, and
+MSstatsConvert converts the data for the analysis with MSstats. The conversion
+specification was obtained once and saved, so the vignette runs without a
+language model, an API key or a network connection.
 
 ```{r setup, message = FALSE}
 library(MSstatsConvertLLM)
@@ -43,45 +43,47 @@ str(input)
 annotation
 ```
 
-# Inferring the mapping
+# Inferring the conversion specification
 
-`infer_mapping()` sends the column names and three example rows of the export
-to the model, and returns the mapping that the model proposes. We obtained the
-saved mapping with the call below, using deepseek-r1-14b and the filter-aware
-prompt, after one discarded call. The script
-`inst/scripts/make_new_format_mapping.R` repeats it.
+`infer_specification()` sends the column names and three example rows of the
+export to the model, and returns the conversion specification that the model
+proposes. We obtained the saved conversion specification with the call below,
+using deepseek-r1-14b and the filter-aware prompt, after one discarded call.
+The script `inst/scripts/make_alphapept_specification.R` repeats it.
 
 ```{r infer-live, eval = FALSE}
-mapping <- infer_mapping(input, "deepseek-r1-14b", "filter_aware",
-                         acquisition = "DDA")
+mapping <- infer_specification(input, "deepseek-r1-14b", "filter_aware",
+                               acquisition = "DDA")
 ```
 
-Here, we read the saved mapping instead.
+Here, we read the saved conversion specification instead.
 
 ```{r infer-saved}
-path <- system.file("extdata", "new_format_mapping.rds",
+path <- system.file("extdata", "alphapept_specification.rds",
                     package = "MSstatsConvertLLM")
 if (!nzchar(path)) {
-  stop("The saved mapping inst/extdata/new_format_mapping.rds is missing. ",
+  stop("The saved conversion specification ",
+       "inst/extdata/alphapept_specification.rds is missing. ",
        "Build it with Ollama running and deepseek-r1-14b pulled:\n",
-       "  Rscript inst/scripts/make_new_format_mapping.R\n",
+       "  Rscript inst/scripts/make_alphapept_specification.R\n",
        "then reinstall the package.", call. = FALSE)
 }
 mapping <- readRDS(path)
 ```
 
-# The proposed mapping
+# The proposed conversion specification
 
-The mapping gives, for each MSstats field, the column that the model chose and
-its confidence. The export has no fragment ion, product charge or Q-value
-column, so the model left these fields empty, with a confidence of zero.
+The conversion specification gives, for each MSstats field, the column that
+the model chose and its confidence. The export has no fragment ion, product
+charge or Q-value column, so the model left these fields empty, with a
+confidence of zero.
 
 ```{r mapping}
 proposed <- as.data.frame(mapping$mappings)
 proposed[, c("field", "from", "confidence")]
 ```
 
-# Checking the mapping
+# Checking the conversion specification
 
 Before converting, check three choices, in this order: the intensity column,
 the peptide sequence and the filters. The intensity must be
@@ -113,8 +115,8 @@ if (NROW(mapping$filters) > 0) {
 The decoy filter is applied by default. It sets the intensities of the decoy
 matches to missing, and since a decoy feature is then missing in every run,
 MSstats drops it. To keep the decoys, for example to inspect them, drop the
-filter from the mapping. Decoy features are usually measured in few runs, so
-the conversion must also keep features with few measurements.
+filter from the conversion specification. Decoy features are usually measured
+in few runs, so the conversion must also keep features with few measurements.
 
 ```{r keep-decoys}
 with_decoys <- mapping
@@ -131,7 +133,7 @@ converted_with_decoys <- LLMtoMSstatsFormat(input = input, annotation = annotati
 
 # Changing a field by hand
 
-The mapping is a data frame, so you can change any field before converting.
+The mappings are a data frame, so you can change any field before converting.
 Here the model already chose the modified sequence, so the line below changes
 nothing, but it shows how to correct the field if the model had chosen the
 stripped sequence.
@@ -141,10 +143,11 @@ mapping$mappings$from[mapping$mappings$field == "PeptideSequence"] <- "sequence"
 mapping$mappings[mapping$mappings$field == "PeptideSequence", c("field", "from")]
 ```
 
-# Validating the mapping
+# Validating the conversion specification
 
-`validate_mapping()` checks the mapping itself, for example that no column is
-assigned to two fields and that no required field is missing.
+`validate_mapping()` checks the conversion specification itself, for example
+that no column is assigned to two fields and that no required field is
+missing.
 
 ```{r validate}
 validation <- validate_mapping(mapping)
@@ -152,10 +155,11 @@ validation$passed
 validation$issues
 ```
 
-# Saving the checked mapping
+# Saving the checked conversion specification
 
-We recommend saving the checked mapping and publishing it with the analysis.
-It records how the data were converted, even after the model changes.
+We recommend saving the checked conversion specification and publishing it
+with the analysis. It records how the data were converted, even after the
+model changes.
 
 ```{r save-mapping}
 mapping_file <- file.path(tempdir(), "AlphaPept_mapping.json")
@@ -165,8 +169,9 @@ file.exists(mapping_file)
 
 # Converting
 
-`LLMtoMSstatsFormat()` applies the mapping and the annotation, and runs the
-same processing steps as the hand-written converters of MSstatsConvert.
+`LLMtoMSstatsFormat()` applies the conversion specification and the
+annotation, and runs the same processing steps as the hand-written converters
+of MSstatsConvert.
 
 ```{r convert, message = FALSE, warning = FALSE}
 converted <- LLMtoMSstatsFormat(input = input, annotation = annotation,
@@ -176,7 +181,7 @@ head(converted, 3)
 ```
 
 The `diagnostics` attribute lists the proposed filters that were applied and
-those that were skipped, and any column named in the mapping that does not
+those that were skipped, and any column named in the mappings that does not
 exist in the export.
 
 ```{r diagnostics}

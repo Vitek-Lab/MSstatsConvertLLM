@@ -9,10 +9,10 @@
 #' Registry of benchmark models
 #'
 #' A named list of model specifications used by [create_chat()] and
-#' [run_trial()]. Each entry has `provider` (`"ollama"` or `"anthropic"`),
-#' `model` (the provider-specific model id), and a human-readable `label`.
-#' Edit this object in `R/config.R` (and reinstall / `devtools::load_all()`) to
-#' add models to the benchmark.
+#' [run_benchmark_trial()]. Each entry has `provider` (`"ollama"` or
+#' `"anthropic"`), `model` (the provider-specific model id), and a
+#' human-readable `label`. Edit this object in `R/config.R` (and reinstall /
+#' `devtools::load_all()`) to add models to the benchmark.
 #'
 #' @export
 MODEL_REGISTRY <- list(
@@ -305,7 +305,8 @@ make_json_preview <- function(df, n_rows = 3, max_chars = 50) {
 #
 # These are built lazily by the functions below so the package can be
 # installed and loaded without the (optional) 'ellmer' dependency. They are
-# only evaluated from within run_trial(), which checks for ellmer first.
+# only evaluated from within run_benchmark_trial(), which checks for ellmer
+# first.
 # ------------------------------------------------------------------
 
 #' @keywords internal

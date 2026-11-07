@@ -6,7 +6,7 @@
 # and empirical FDR using species-labeled benchmark data.
 # ============================================================
 
-library(MSstatsConvertLLM)     # run_trial(), score_trial(), LLMtoMSstatsFormat()
+library(MSstatsConvertLLM)     # run_benchmark_trial(), score_trial(), LLMtoMSstatsFormat()
 
 library(MSstats)
 library(ggplot2)

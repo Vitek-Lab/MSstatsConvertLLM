@@ -59,7 +59,7 @@ library(MSstatsConvertLLM)
 input <- load_test_dataset("spectronaut")   # or data.table::fread("your_file.csv")
 
 # Ask a local model to infer the column mapping + filters
-trial <- run_trial(
+trial <- run_benchmark_trial(
   model_key   = "llama3.1-8b",
   tool_name   = "spectronaut",
   prompt_key  = "constrained_filter",
@@ -117,7 +117,7 @@ MSstatsConvertLLM/
 │   ├── MSstatsConvertLLM-package.R  # Package doc, imports, globalVariables
 │   ├── config.R           # Model registry, ground truth, MSstats schema, helpers
 │   ├── prompts.R          # Lean / constrained / filter-aware prompt templates
-│   ├── benchmark.R        # create_chat(), run_trial(), score_trial(), print_scorecard()
+│   ├── benchmark.R        # create_chat(), run_benchmark_trial(), score_trial(), print_scorecard()
 │   └── LLMtoMSstatsFormat.R  # Generic LLM-driven converter
 ├── man/                   # Generated function documentation
 ├── run_one.R              # Interactive single-trial driver

@@ -1,7 +1,7 @@
-# make_new_format_data.R - build the files the new-format vignette reads
+# make_alphapept_data.R - build the files the new-format vignette reads
 #
 # Run from the repository root:
-#   Rscript inst/scripts/make_new_format_data.R
+#   Rscript inst/scripts/make_alphapept_data.R
 #
 # Downloads ProteoBench's AlphaPept example, cuts it under the 1 MB an R
 # package should carry, and writes the annotation its run names imply. See

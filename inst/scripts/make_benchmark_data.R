@@ -1,7 +1,7 @@
-# make_extdata.R — build the files the benchmark vignette reads
+# make_benchmark_data.R — build the files the benchmark vignette reads
 #
 # Run from the repository root, where results/ holds the saved runs:
-#   Rscript inst/scripts/make_extdata.R
+#   Rscript inst/scripts/make_benchmark_data.R
 #
 # 1. inst/extdata/raw_trials_benchmark_20261007_163702.rds is a straight copy
 #    of the saved trials, so the vignette needs no model and no API key.

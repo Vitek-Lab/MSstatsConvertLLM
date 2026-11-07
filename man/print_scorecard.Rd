@@ -9,7 +9,7 @@ print_scorecard(scores, trial_result)
 \arguments{
 \item{scores}{A \code{data.table} returned by \code{\link[=score_trial]{score_trial()}}.}
 
-\item{trial_result}{The list returned by \code{\link[=run_trial]{run_trial()}}.}
+\item{trial_result}{The list returned by \code{\link[=run_benchmark_trial]{run_benchmark_trial()}}.}
 }
 \value{
 \code{scores}, invisibly.

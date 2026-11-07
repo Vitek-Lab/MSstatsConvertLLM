@@ -36,10 +36,10 @@ OLLAMA <- Sys.getenv("MSSTATS_OLLAMA_URL", "http://localhost:11500")
 
 ## ---------------------------------------------------------------- guard
 ##
-## The unload and scramble calls below go straight to the tunnel, but run_trial
-## goes through ellmer. On a branch without the configurable base URL, ellmer
-## defaults to localhost:11434 and every trial fails against a port with nothing
-## on it. Fail here instead of 150 runs later.
+## The unload and scramble calls below go straight to the tunnel, but
+## run_benchmark_trial goes through ellmer. On a branch without the configurable
+## base URL, ellmer defaults to localhost:11434 and every trial fails against a
+## port with nothing on it. Fail here instead of 150 runs later.
 
 if (!exists("OLLAMA_URL")) {
   stop("OLLAMA_URL not found. Check out a branch that has the configurable ",
@@ -100,9 +100,9 @@ ollama_scramble <- function(model_key) {
 ## Mirrors the call in run_all.R exactly. If the study ran a different
 ## configuration from the sweep, its conclusions would not transfer.
 call_trial <- function(model, tool, prompt) {
-  run_trial(model, tool, prompt,
-            acquisition      = TOOL_ACQUISITION[[tool]],
-            allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool]]))
+  run_benchmark_trial(model, tool, prompt,
+                      acquisition      = TOOL_ACQUISITION[[tool]],
+                      allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool]]))
 }
 
 ## One row per run. The mapping string is the point: scores can stay identical

@@ -20,9 +20,9 @@ TRANSFORMS  <- TOOL_TRANSFORMS[[TOOL]]   # TRUE for DIA-NN, FALSE for others
 cat("Running:", MODEL, "|", TOOL, "|", PROMPT, "|", ACQUISITION, 
     "| transforms:", TRANSFORMS, "\n\n")
  
-trial  <- run_trial(MODEL, TOOL, PROMPT, 
-                    acquisition = ACQUISITION,
-                    allow_transforms = TRANSFORMS)
+trial  <- run_benchmark_trial(MODEL, TOOL, PROMPT, 
+                              acquisition = ACQUISITION,
+                              allow_transforms = TRANSFORMS)
 scores <- score_trial(trial)
 print_scorecard(scores, trial)
  
