@@ -162,7 +162,7 @@ with the analysis. It records how the data were converted, even after the
 model changes.
 
 ```{r save-mapping}
-mapping_file <- file.path(tempdir(), "AlphaPept_mapping.json")
+mapping_file <- file.path(tempdir(), "AlphaPept_specification.json")
 jsonlite::write_json(mapping, mapping_file, auto_unbox = TRUE, pretty = TRUE)
 file.exists(mapping_file)
 ```

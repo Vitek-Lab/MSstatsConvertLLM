@@ -2,7 +2,7 @@
 % Please edit documentation in R/benchmark.R
 \name{infer_specification}
 \alias{infer_specification}
-\title{Infer an MSstats mapping for a table of tool output}
+\title{Infer an MSstats conversion specification for a table of tool output}
 \usage{
 infer_specification(
   data,
@@ -41,7 +41,7 @@ attached as the \code{elapsed_sec} attribute.
 }
 \description{
 Builds the data preview, asks a model to map the columns onto the MSstats
-schema, and returns the parsed mapping. This is the step
+schema, and returns the parsed conversion specification. This is the step
 \code{\link[=run_benchmark_trial]{run_benchmark_trial()}} performs, without the benchmark bookkeeping: call it
 directly on the output of a tool that has no converter of its own, then pass
 the result to \code{\link[=LLMtoMSstatsFormat]{LLMtoMSstatsFormat()}}.

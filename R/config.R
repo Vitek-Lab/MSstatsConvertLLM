@@ -305,8 +305,8 @@ make_json_preview <- function(df, n_rows = 3, max_chars = 50) {
 #
 # These are built lazily by the functions below so the package can be
 # installed and loaded without the (optional) 'ellmer' dependency. They are
-# only evaluated from within run_benchmark_trial(), which checks for ellmer
-# first.
+# only evaluated from within infer_specification(), which run_benchmark_trial()
+# calls and which checks for ellmer first.
 # ------------------------------------------------------------------
 
 #' @keywords internal

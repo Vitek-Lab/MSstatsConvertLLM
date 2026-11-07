@@ -7,15 +7,15 @@ automatically map the columns of arbitrary mass-spectrometry proteomics tool
 output onto the standardized [MSstats](https://github.com/Vitek-Lab/MSstats)
 analysis schema. Instead of relying on hand-written, tool-specific converters,
 the package prompts a local LLM to infer column mappings (and quality-control
-filters) and then feeds that mapping into the existing
+filters) and then feeds that conversion specification into the existing
 [MSstatsConvert](https://github.com/Vitek-Lab/MSstatsConvert) pipeline, reducing
 the manual overhead required to onboard new input formats.
 
 The package provides two things:
 
 1. **A generic converter** — `LLMtoMSstatsFormat()` takes raw tool output plus an
-   LLM-produced mapping and returns a data.table in MSstats format, ready for
-   `MSstats::dataProcess()`.
+   LLM-produced conversion specification and returns a data.table in MSstats
+   format, ready for `MSstats::dataProcess()`.
 2. **A benchmarking harness** — tooling to evaluate how well different local
    models, prompt strategies, and tools recover the correct schema mapping,
    scored against curated ground truth.
@@ -50,7 +50,7 @@ devtools::install(".")
 
 ## Quick start
 
-### 1. Convert a dataset with an LLM-inferred mapping
+### 1. Convert a dataset with an LLM-inferred conversion specification
 
 ```r
 library(MSstatsConvertLLM)
@@ -66,7 +66,7 @@ trial <- run_benchmark_trial(
   acquisition = "DIA"
 )
 
-# Feed the LLM mapping into the MSstats converter
+# Feed the LLM conversion specification into the MSstats converter
 msstats_input <- LLMtoMSstatsFormat(
   input       = input,
   annotation  = "path/to/annotation.csv",   # Run / Condition / BioReplicate

@@ -56,10 +56,10 @@ create_chat <- function(model_key) {
 # Infer a mapping for any table of tool output
 # ------------------------------------------------------------------
 
-#' Infer an MSstats mapping for a table of tool output
+#' Infer an MSstats conversion specification for a table of tool output
 #'
 #' Builds the data preview, asks a model to map the columns onto the MSstats
-#' schema, and returns the parsed mapping. This is the step
+#' schema, and returns the parsed conversion specification. This is the step
 #' [run_benchmark_trial()] performs, without the benchmark bookkeeping: call it
 #' directly on the output of a tool that has no converter of its own, then pass
 #' the result to [LLMtoMSstatsFormat()].

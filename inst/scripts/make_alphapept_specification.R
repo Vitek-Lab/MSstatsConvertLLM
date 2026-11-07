@@ -1,4 +1,5 @@
-# make_alphapept_specification.R - infer the mapping the new-format vignette reads
+# make_alphapept_specification.R - infer the conversion specification the
+# new-format vignette reads
 #
 # Needs Ollama running and deepseek-r1-14b pulled. Run from the repository
 # root, after inst/scripts/make_alphapept_data.R has written the subset:
