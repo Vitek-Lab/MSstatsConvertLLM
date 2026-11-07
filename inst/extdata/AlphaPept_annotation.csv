@@ -1,0 +1,7 @@
+Run,Condition,BioReplicate
+LFQ_Orbitrap_DDA_Condition_A_Sample_Alpha_01,A,A_1
+LFQ_Orbitrap_DDA_Condition_A_Sample_Alpha_02,A,A_2
+LFQ_Orbitrap_DDA_Condition_A_Sample_Alpha_03,A,A_3
+LFQ_Orbitrap_DDA_Condition_B_Sample_Alpha_01,B,B_1
+LFQ_Orbitrap_DDA_Condition_B_Sample_Alpha_02,B,B_2
+LFQ_Orbitrap_DDA_Condition_B_Sample_Alpha_03,B,B_3

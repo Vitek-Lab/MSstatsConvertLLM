@@ -23,7 +23,7 @@ ollama_unload <- function(model_key) {
 }
 
 one_run <- function(acq) {
-  t <- run_trial(MODEL, TOOL, "constrained", acquisition = acq)
+  t <- run_benchmark_trial(MODEL, TOOL, "constrained", acquisition = acq)
   s <- score_trial(t)
   data.table(
     exact   = sum(s$exact_match),

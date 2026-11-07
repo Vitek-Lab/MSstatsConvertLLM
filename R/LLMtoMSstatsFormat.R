@@ -473,7 +473,7 @@ LLMtoMSstatsFormat <- function(
     }
   
     if (verbose) {
-      message(sprintf("  Filter registered: %s %s %s", col, op, val))
+      message(sprintf("  Filter registered, keeping rows where %s %s %s", col, op, val))
     }
   }
   

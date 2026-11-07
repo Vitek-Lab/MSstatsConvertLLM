@@ -8,8 +8,8 @@ MODEL_REGISTRY
 }
 \description{
 A named list of model specifications used by \code{\link[=create_chat]{create_chat()}} and
-\code{\link[=run_trial]{run_trial()}}. Each entry has \code{provider} (\code{"ollama"} or \code{"anthropic"}),
-\code{model} (the provider-specific model id), and a human-readable \code{label}.
-Edit this object in \code{R/config.R} (and reinstall / \code{devtools::load_all()}) to
-add models to the benchmark.
+\code{\link[=run_benchmark_trial]{run_benchmark_trial()}}. Each entry has \code{provider} (\code{"ollama"} or
+\code{"anthropic"}), \code{model} (the provider-specific model id), and a
+human-readable \code{label}. Edit this object in \code{R/config.R} (and reinstall /
+\code{devtools::load_all()}) to add models to the benchmark.
 }

@@ -7,7 +7,7 @@
 score_trial(trial_result)
 }
 \arguments{
-\item{trial_result}{A list returned by \code{\link[=run_trial]{run_trial()}}.}
+\item{trial_result}{A list returned by \code{\link[=run_benchmark_trial]{run_benchmark_trial()}}.}
 }
 \value{
 A \code{data.table} with one row per MSstats field: \code{field}, \code{predicted},

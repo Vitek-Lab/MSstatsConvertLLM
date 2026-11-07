@@ -84,10 +84,10 @@ for (model_key in selected_models) {
   # discarded.
   cat(sprintf("[warmup] %s ... ", model_key))
   warm <- tryCatch({
-    run_trial(model_key, selected_tools[1], selected_prompts[1],
-              acquisition = TOOL_ACQUISITION[[selected_tools[1]]],
-              allow_transforms = isTRUE(TOOL_TRANSFORMS[[selected_tools[1]]]),
-              source = selected_source)
+    run_benchmark_trial(model_key, selected_tools[1], selected_prompts[1],
+                        acquisition = TOOL_ACQUISITION[[selected_tools[1]]],
+                        allow_transforms = isTRUE(TOOL_TRANSFORMS[[selected_tools[1]]]),
+                        source = selected_source)
   }, error = function(e) NULL)
   cat(if (is.null(warm)) "failed\n\n" else sprintf("%.1fs\n\n", warm$elapsed_sec))
 
@@ -100,10 +100,10 @@ for (model_key in selected_models) {
       # columns. Without this, rep 1 of every block is not comparable to the
       # rest. Discarded.
       tryCatch(
-        run_trial(model_key, tool_name, prompt_key,
-                  acquisition = TOOL_ACQUISITION[[tool_name]],
-                  allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool_name]]),
-                  source = selected_source),
+        run_benchmark_trial(model_key, tool_name, prompt_key,
+                            acquisition = TOOL_ACQUISITION[[tool_name]],
+                            allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool_name]]),
+                            source = selected_source),
         error = function(e) NULL)
 
       for (rep in seq_len(n_reps)) {
@@ -112,10 +112,10 @@ for (model_key in selected_models) {
                     idx, model_key, tool_name, prompt_key, rep))
         
         trial <- tryCatch(
-          run_trial(model_key, tool_name, prompt_key,
-                    acquisition = TOOL_ACQUISITION[[tool_name]],
-                    allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool_name]]),
-                    source = selected_source),
+          run_benchmark_trial(model_key, tool_name, prompt_key,
+                              acquisition = TOOL_ACQUISITION[[tool_name]],
+                              allow_transforms = isTRUE(TOOL_TRANSFORMS[[tool_name]]),
+                              source = selected_source),
           error = function(e) {
             message("FAILED: ", e$message)
             list(

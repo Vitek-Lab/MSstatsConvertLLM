@@ -8,6 +8,6 @@ PROMPT_VERSIONS
 }
 \description{
 A named list of system-prompt strings keyed by strategy
-(\code{lean}, \code{constrained}, \code{filter_aware}, \code{constrained_filter}). Add new
-strategies by registering them here.
+(\code{lean}, \code{constrained}, \code{filter_aware}, \code{constrained_filter}, and the
+\verb{_v2} variants). Add new strategies by registering them here.
 }
