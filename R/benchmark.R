@@ -2,6 +2,11 @@
 # benchmark.R — Run a single benchmark trial
 # ============================================================
 
+# Prompts that ask for filter discovery. Each needs the output type with a
+# filters field. Listed once so the two places that check it stay in step.
+FILTER_PROMPTS <- c("filter_aware", "constrained_filter",
+                    "constrained_filter_v2", "constrained_filter_v3")
+
 # ------------------------------------------------------------------
 # Create a chat object for a given model key
 # ------------------------------------------------------------------
@@ -27,7 +32,7 @@ create_chat <- function(model_key) {
   if (spec$provider == "ollama") {
     ellmer::chat_ollama(
       model = spec$model,
-      base_url = OLLAMA_URL,
+      base_url = .ollama_url(),
       params = ellmer::params(
         format      = "json",
         temperature = 0,
@@ -48,56 +53,59 @@ create_chat <- function(model_key) {
 }
 
 # ------------------------------------------------------------------
-# Run one benchmark trial
+# Infer a conversion specification for any table of tool output
 # ------------------------------------------------------------------
 
-#' Run one schema-inference trial
+#' Infer an MSstats conversion specification for a table of tool output
 #'
-#' Loads a tool's test dataset, builds the prompt, queries a local model, and
-#' returns the parsed mapping together with validation and timing metadata.
-#' Requires the optional `ellmer` package and a running model backend
-#' (e.g. Ollama).
+#' Builds the data preview, asks a model to map the columns onto the MSstats
+#' schema, and returns the parsed conversion specification. This is the step
+#' [run_benchmark_trial()] performs, without the benchmark bookkeeping: call it
+#' directly on the output of a tool that has no converter of its own, then pass
+#' the result to [LLMtoMSstatsFormat()].
 #'
+#' @param data A data frame of raw tool output. Only its column names and the
+#'   first `n_preview` rows are sent to the model.
 #' @param model_key Key into [MODEL_REGISTRY] (e.g. `"llama3.1-8b"`).
-#' @param tool_name Key into [GROUND_TRUTH] / [load_test_dataset()].
 #' @param prompt_key One of `names(PROMPT_VERSIONS)` (e.g. `"lean"`,
 #'   `"constrained"`, `"constrained_filter"`).
 #' @param acquisition `"DIA"`, `"DDA"`, or `NULL` to let the model guess.
-#' @param allow_transforms Enable packed-column transform detection.
 #' @param n_preview Number of rows to include in the data preview.
-#' @param source `"fixture"` or `"benchmark"`, passed to [load_test_dataset()].
+#' @param allow_transforms Enable packed-column transform detection.
 #' @param use_structured Use `chat_structured()` (`TRUE`) or raw `chat()`
 #'   (`FALSE`).
-#' @return A list with `model`, `tool`, `prompt`, `mapping` (parsed),
-#'   `validation`, `elapsed_sec`, and `timestamp`.
+#' @return The parsed conversion specification: a list with `mappings`,
+#'   `confidence`, `notes` and `warnings`, plus `filters` for a filter-aware
+#'   prompt. This is the object [run_benchmark_trial()] returns as its `mapping`
+#'   element and the one [LLMtoMSstatsFormat()] takes as `llm_mapping`. How long
+#'   the model took is attached as the `elapsed_sec` attribute.
+#' @details Requires the optional `ellmer` package and a running model backend
+#'   (e.g. Ollama).
 #' @export
-run_trial <- function(model_key,
-                      tool_name,
-                      prompt_key = "constrained",
-                      acquisition = NULL,
-                      allow_transforms = FALSE,
-                      n_preview  = 3,
-                      use_structured = TRUE,
-                      source = "fixture") {
-  
-  # Load data and build prompt
-  df <- load_test_dataset(tool_name, source = source)
-  preview <- make_json_preview(df, n_rows = n_preview)
+infer_specification <- function(data,
+                                model_key,
+                                prompt_key = "constrained",
+                                acquisition = NULL,
+                                n_preview = 3,
+                                allow_transforms = FALSE,
+                                use_structured = TRUE) {
+
+  preview <- make_json_preview(data, n_rows = n_preview)
   system_prompt <- PROMPT_VERSIONS[[prompt_key]]
   user_prompt   <- build_user_prompt(preview, acquisition = acquisition,
                                      allow_transforms = allow_transforms)
-  
+
   # Create fresh chat with system prompt
   chat <- create_chat(model_key)
   chat$set_system_prompt(system_prompt)
-  
+
   # Run inference with timing
   t0 <- Sys.time()
-  
+
   # Pick the right structured type based on prompt and transforms
-  has_filters <- prompt_key %in% c("filter_aware", "constrained_filter")
+  has_filters <- prompt_key %in% FILTER_PROMPTS
   result_type <- .select_mapping_type(has_filters, allow_transforms)
-  
+
   if (use_structured) {
     result <- tryCatch(
       chat$chat_structured(user_prompt, type = result_type, convert = TRUE),
@@ -107,7 +115,7 @@ run_trial <- function(model_key,
         NULL
       }
     )
-    
+
     # Fallback: raw chat + manual parse
     if (is.null(result)) {
       chat2 <- create_chat(model_key)
@@ -131,9 +139,59 @@ run_trial <- function(model_key,
       }
     )
   }
-  
+
   elapsed <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+  attr(result, "elapsed_sec") <- round(elapsed, 2)
+  result
+}
+
+# ------------------------------------------------------------------
+# Run one benchmark trial
+# ------------------------------------------------------------------
+
+#' Run one schema-inference trial
+#'
+#' Loads a tool's test dataset, builds the prompt, queries a local model, and
+#' returns the parsed conversion specification together with validation and
+#' timing metadata.
+#' Requires the optional `ellmer` package and a running model backend
+#' (e.g. Ollama).
+#'
+#' @param model_key Key into [MODEL_REGISTRY] (e.g. `"llama3.1-8b"`).
+#' @param tool_name Key into [GROUND_TRUTH] / [load_test_dataset()].
+#' @param prompt_key One of `names(PROMPT_VERSIONS)` (e.g. `"lean"`,
+#'   `"constrained"`, `"constrained_filter"`).
+#' @param acquisition `"DIA"`, `"DDA"`, or `NULL` to let the model guess.
+#' @param allow_transforms Enable packed-column transform detection.
+#' @param n_preview Number of rows to include in the data preview.
+#' @param source `"fixture"` or `"benchmark"`, passed to [load_test_dataset()].
+#' @param use_structured Use `chat_structured()` (`TRUE`) or raw `chat()`
+#'   (`FALSE`).
+#' @return A list with `model`, `tool`, `prompt`, `mapping` (parsed),
+#'   `validation`, `elapsed_sec`, and `timestamp`.
+#' @export
+run_benchmark_trial <- function(model_key,
+                                tool_name,
+                                prompt_key = "constrained",
+                                acquisition = NULL,
+                                allow_transforms = FALSE,
+                                n_preview  = 3,
+                                use_structured = TRUE,
+                                source = "fixture") {
   
+  # Load the data, then infer the mapping. The time infer_specification()
+  # reports is the model call alone, measured where it was measured here before;
+  # it rides back on the result and comes off again, so `mapping` is the bare
+  # object.
+  df <- load_test_dataset(tool_name, source = source)
+  result <- infer_specification(df, model_key, prompt_key,
+                                acquisition      = acquisition,
+                                n_preview        = n_preview,
+                                allow_transforms = allow_transforms,
+                                use_structured   = use_structured)
+  elapsed <- attr(result, "elapsed_sec")
+  attr(result, "elapsed_sec") <- NULL
+
   # Post-hoc validation
   validation <- validate_mapping(result)
   
@@ -152,12 +210,13 @@ run_trial <- function(model_key,
 # Post-hoc validation of LLM mapping output
 # ------------------------------------------------------------------
 
-#' Post-hoc validation of an LLM mapping result
+#' Post-hoc validation of an LLM conversion specification
 #'
 #' Catches issues the LLM gets wrong regardless of prompt: duplicate column
 #' assignments, missing required fields, and out-of-range confidences.
 #'
-#' @param mapping_result A parsed mapping (with a `$mappings` element).
+#' @param mapping_result A parsed conversion specification (with a
+#'   `$mappings` element).
 #' @return A list with `passed` (logical) and `issues` (character vector).
 #' @export
 validate_mapping <- function(mapping_result) {
@@ -227,7 +286,7 @@ validate_mapping <- function(mapping_result) {
 
 #' Score a trial against ground truth
 #'
-#' @param trial_result A list returned by [run_trial()].
+#' @param trial_result A list returned by [run_benchmark_trial()].
 #' @return A `data.table` with one row per MSstats field: `field`, `predicted`,
 #'   `expected`, `n_acceptable`, `exact_match`, `acceptable_match`,
 #'   `candidate_hit`, `confidence`, `has_candidates`, `n_candidates`.
@@ -338,7 +397,7 @@ score_trial <- function(trial_result) {
 #' Pretty-print a scored trial to the console
 #'
 #' @param scores A `data.table` returned by [score_trial()].
-#' @param trial_result The list returned by [run_trial()].
+#' @param trial_result The list returned by [run_benchmark_trial()].
 #' @return `scores`, invisibly.
 #' @export
 print_scorecard <- function(scores, trial_result) {
@@ -389,7 +448,7 @@ print_scorecard <- function(scores, trial_result) {
   }
   
   # Show filter results if this was a filter-aware prompt
-  if (trial_result$prompt %in% c("filter_aware", "constrained_filter")) {
+  if (trial_result$prompt %in% FILTER_PROMPTS) {
     predicted_filters <- trial_result$mapping$filters
     if (is.data.frame(predicted_filters)) {
       predicted_filters <- lapply(
@@ -405,7 +464,7 @@ print_scorecard <- function(scores, trial_result) {
       cat("    (none)\n")
     } else {
       for (f in predicted_filters) {
-        cat(sprintf("    %s %s %s  (conf=%.2f)\n",
+        cat(sprintf("    keep rows where %s %s %s  (conf=%.2f)\n",
                     f[["column"]], f[["operation"]], f[["value"]],
                     as.numeric(f[["confidence"]])))
         cat(sprintf("      %s\n", f[["description"]]))

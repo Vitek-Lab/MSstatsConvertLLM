@@ -6,7 +6,8 @@
 # converters use.
 # ============================================================
 
-#' Convert arbitrary proteomics output to MSstats format using LLM mapping
+#' Convert arbitrary proteomics output to MSstats format using an LLM
+#' conversion specification
 #'
 #' @param input data.table of raw tool output
 #' @param annotation data.table with Run, Condition, BioReplicate columns, or
@@ -294,7 +295,8 @@ LLMtoMSstatsFormat <- function(
 # Internal helpers
 # ==================================================================
 
-#' Parse LLM mapping JSON into a rename map and list of fill columns
+#' Parse an LLM conversion specification into a rename map and list of fill
+#' columns
 #' @param llm_mapping list with $mappings (array of field/from objects)
 #' @return list(rename_map = named list, fill_columns = character vector)
 #' @keywords internal
@@ -473,7 +475,7 @@ LLMtoMSstatsFormat <- function(
     }
   
     if (verbose) {
-      message(sprintf("  Filter registered: %s %s %s", col, op, val))
+      message(sprintf("  Filter registered, keeping rows where %s %s %s", col, op, val))
     }
   }
   

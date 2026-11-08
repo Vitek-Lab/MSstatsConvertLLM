@@ -1,0 +1,146 @@
+Files distributed with MSstatsConvertLLM
+========================================
+
+AlphaPept_subset.csv
+AlphaPept_annotation.csv
+--------------------------------------------------------------------------
+
+AlphaPept output for the example in the vignette "1. Converting the output
+of a tool without a converter". MSstatsConvert has no AlphaPept converter, so
+the vignette converts this file with a conversion specification proposed by a
+language model.
+
+Source
+  ProteoBench, file test/data/quant/quant_lfq_ion_DDA_QExactive/
+  AlphaPept_subset.csv.
+  https://github.com/Proteobench/ProteoBench
+  Retrieved 27 October 2026.
+
+License
+  The ProteoBench repository, including this file, is distributed under the
+  Apache License 2.0. https://www.apache.org/licenses/LICENSE-2.0
+
+Underlying measurements
+  A Q Exactive HF-X DDA subset of the mixed-species LFQ benchmark of
+
+    Van Puyvelde, B. et al. A comprehensive LFQ benchmark dataset on modern
+    day acquisition strategies in proteomics. Scientific Data 9, 126 (2022).
+    https://doi.org/10.1038/s41597-022-01216-6
+
+  deposited in PRIDE as PXD028735. The article is open access under CC BY 4.0.
+
+Experimental design
+  Human, yeast and E. coli digests are mixed in two proportions, conditions A
+  and B. ProteoBench uses the first biological replicate series, "alpha",
+  with three technical replicates of each condition, six runs in all. Human is
+  present in equal amounts in both conditions, yeast is twice as abundant in
+  A, and E. coli is four times as abundant in B, so the expected log2 fold
+  changes of B against A are 0, -1 and +2.
+
+  AlphaPept_annotation.csv lists the six runs. Each run has its own
+  BioReplicate, so MSstats compares A with B across the three runs of each
+  condition, as ProteoBench does. The BioReplicate labels include the
+  condition, since a BioReplicate that appears in both conditions would make
+  MSstats treat the design as paired.
+
+Subset
+  To keep the package small, the subset contains every row of a protein seen
+  in at least four of the six runs, and every row flagged as a decoy, which a
+  filter-aware prompt should find. This leaves 7,106 of the 9,814 rows, 462
+  proteins and all 44 decoy rows, in 851 kB. The columns are unchanged.
+
+  Rebuild with: Rscript inst/scripts/make_alphapept_data.R
+
+alphapept_specification.rds
+--------------------------------------------------------------------------
+
+The conversion specification that deepseek-r1-14b returned for
+AlphaPept_subset.csv under the filter_aware prompt. It was obtained once, with
+Ollama on a local computer, and is distributed so that the vignette runs
+without a language model.
+
+  Rebuild with: Rscript inst/scripts/make_alphapept_specification.R
+
+pd_case_study.rds
+spectronaut_case_study.rds
+metamorpheus_case_study.rds
+--------------------------------------------------------------------------
+
+The saved data read by the vignettes "2. Checking the intensity column"
+(Proteome Discoverer, PXD005642), "3. Checking the filters" (Spectronaut,
+Puyvelde2022) and "4. Checking the peptide sequence" (MetaMorpheus,
+Solivais2024). Each file is a list with
+
+  rows           Rows of the export, with the column names the tool wrote.
+                 The first three are the rows the model was shown. For
+                 Spectronaut, the rows are the fragments of the first
+                 precursor.
+  forms          MetaMorpheus only: the first peptide that the export reports
+                 both with and without a modification, in one run, at one
+                 charge and in one protein group.
+  specification  The conversion specification of the saved benchmark trial
+                 that the downstream comparison used, repeat 1 of
+                 llama3.1-8b with the constrained_v3 prompt (Proteome
+                 Discoverer, Spectronaut) or the lean prompt (MetaMorpheus).
+  results        The case's panel of the downstream figure, from
+                 downstream_panels.rds: one row per protein and comparison,
+                 the hand-written converter in the _h columns and the
+                 LLM-based converter in the _l columns.
+
+The rows come from the deposited datasets of the manuscript, truncated to
+their first rows, in benchmark_data/ of the GitHub repository. The
+specifications and the results are cut from the saved trials and
+downstream_panels.rds below, so nothing is recomputed.
+
+  Rebuild with: Rscript inst/scripts/make_case_study_data.R
+
+Source of the Proteome Discoverer rows
+  The 15 runs of PXD005642, which the CRG/UPF Proteomics Unit in Barcelona
+  deposited in PRIDE as "MSstats splitplot method for protein quantitation
+  in MS datasets". Thirty commercial proteins, in three subsets of ten, are
+  spiked into an E. coli background in five mixtures, each prepared in
+  triplicate. The runs were acquired by DDA on an LTQ Orbitrap Velos and
+  searched with Proteome Discoverer 1.4 and Mascot 2.5. PRIDE lists no
+  publication for the dataset and no license beyond the EMBL-EBI terms of use.
+  https://www.ebi.ac.uk/pride/archive/projects/PXD005642
+
+Source of the Spectronaut rows
+  A Spectronaut report of the 18 timsTOF Pro diaPASEF runs of conditions A
+  and B in PXD028735, the benchmark of Van Puyvelde et al. (2022) cited above
+  for the AlphaPept file. The deposit holds the raw files but no Spectronaut
+  report. PRIDE lists the deposit under CC0.
+
+Source of the MetaMorpheus rows
+  The 20 runs of PXD003881, the spike-in benchmark of
+
+    Shen, X. et al. IonStar enables high-precision, low-missing-data
+    proteomics quantification in large biological cohorts. Proceedings of
+    the National Academy of Sciences 115, E4767-E4776 (2018).
+    https://doi.org/10.1073/pnas.1800541115
+
+  in which E. coli lysate is spiked into human lysate at five levels, with
+  four runs at each level. The export comes from the reprocessing of these
+  runs with MetaMorpheus and FlashLFQ by
+
+    Solivais, A. J. et al. Improved detection of differentially abundant
+    proteins through FDR-control of peptide-identity-propagation. Journal of
+    Proteome Research 24, 4437-4449 (2025).
+    https://doi.org/10.1021/acs.jproteome.5c00065
+
+  It is not one of the files deposited with that article in PRIDE as
+  PXD057758, whose peak tables differ from it in protein groups and
+  intensities. PRIDE lists no license for PXD003881 beyond the EMBL-EBI
+  terms of use.
+
+raw_trials_benchmark_20261007_163702.rds
+downstream_panels.rds
+benchmark_columns.rds
+--------------------------------------------------------------------------
+
+The saved results of the benchmark in the manuscript: the 288 benchmark
+trials, the per-protein adjusted p-values of the differential abundance
+comparisons in the manuscript, and the column names of each public dataset.
+paper/README.md in the GitHub repository reproduces Table 2 and the
+downstream figure from them, and inst/scripts/make_case_study_data.R cuts the
+case-study files above from the first two. They were produced from the runs
+in results/ by inst/scripts/make_benchmark_data.R.

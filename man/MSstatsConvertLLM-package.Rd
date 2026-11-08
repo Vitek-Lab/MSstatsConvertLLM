@@ -7,10 +7,11 @@
 \title{MSstatsConvertLLM: LLM-driven schema inference and conversion for MSstats}
 \description{
 Uses locally-hosted large language models to map arbitrary proteomics tool
-output onto the MSstats analysis schema, then feeds that mapping into the
-MSstatsConvert pipeline via \code{\link[=LLMtoMSstatsFormat]{LLMtoMSstatsFormat()}}. Also provides a
-benchmarking harness (\code{\link[=run_trial]{run_trial()}}, \code{\link[=score_trial]{score_trial()}}, \code{\link[=print_scorecard]{print_scorecard()}})
-for evaluating model / prompt combinations against curated ground truth.
+output onto the MSstats analysis schema, then feeds that conversion
+specification into the MSstatsConvert pipeline via \code{\link[=LLMtoMSstatsFormat]{LLMtoMSstatsFormat()}}.
+Also provides a benchmarking harness (\code{\link[=run_benchmark_trial]{run_benchmark_trial()}},
+\code{\link[=score_trial]{score_trial()}}, \code{\link[=print_scorecard]{print_scorecard()}}) for evaluating model / prompt
+combinations against curated ground truth.
 }
 \seealso{
 Useful links:

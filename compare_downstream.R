@@ -5,7 +5,7 @@
 # then compares log2FC and adjusted p-values on scatter plots.
 # ============================================================
 
-library(MSstatsConvertLLM)     # run_trial(), score_trial(), LLMtoMSstatsFormat()
+library(MSstatsConvertLLM)     # run_benchmark_trial(), score_trial(), LLMtoMSstatsFormat()
 
 library(MSstats)
 library(ggplot2)
@@ -34,7 +34,7 @@ cat("Model:", MODEL, "| Tool:", TOOL, "| Prompt:", PROMPT, "\n\n")
 # Step 1: Get LLM mapping
 # ==================================================================
 cat("--- Step 1: Running LLM inference ---\n")
-trial <- run_trial(MODEL, TOOL, PROMPT)
+trial <- run_benchmark_trial(MODEL, TOOL, PROMPT)
 scores <- score_trial(trial)
 print_scorecard(scores, trial)
 
