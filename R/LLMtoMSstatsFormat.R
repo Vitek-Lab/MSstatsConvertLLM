@@ -295,7 +295,8 @@ LLMtoMSstatsFormat <- function(
 # Internal helpers
 # ==================================================================
 
-#' Parse LLM mapping JSON into a rename map and list of fill columns
+#' Parse an LLM conversion specification into a rename map and list of fill
+#' columns
 #' @param llm_mapping list with $mappings (array of field/from objects)
 #' @return list(rename_map = named list, fill_columns = character vector)
 #' @keywords internal

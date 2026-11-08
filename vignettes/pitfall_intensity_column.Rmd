@@ -191,3 +191,9 @@ across it.
   things, and choosing between them changes the results.
 - When MSstatsConvert has a converter for the tool, compare the conversion
   specification with the columns that the converter reads by default.
+
+# Session information
+
+```{r sessioninfo}
+sessionInfo()
+```

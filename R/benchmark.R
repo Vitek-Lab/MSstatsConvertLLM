@@ -215,7 +215,8 @@ run_benchmark_trial <- function(model_key,
 #' Catches issues the LLM gets wrong regardless of prompt: duplicate column
 #' assignments, missing required fields, and out-of-range confidences.
 #'
-#' @param mapping_result A parsed mapping (with a `$mappings` element).
+#' @param mapping_result A parsed conversion specification (with a
+#'   `$mappings` element).
 #' @return A list with `passed` (logical) and `issues` (character vector).
 #' @export
 validate_mapping <- function(mapping_result) {

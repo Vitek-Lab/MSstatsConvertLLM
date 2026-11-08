@@ -7,7 +7,8 @@
 validate_mapping(mapping_result)
 }
 \arguments{
-\item{mapping_result}{A parsed mapping (with a \verb{$mappings} element).}
+\item{mapping_result}{A parsed conversion specification (with a
+\verb{$mappings} element).}
 }
 \value{
 A list with \code{passed} (logical) and \code{issues} (character vector).

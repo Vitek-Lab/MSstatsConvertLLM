@@ -94,6 +94,44 @@ downstream_panels.rds below, so nothing is recomputed.
 
   Rebuild with: Rscript inst/scripts/make_case_study_data.R
 
+Source of the Proteome Discoverer rows
+  The 15 runs of PXD005642, which the CRG/UPF Proteomics Unit in Barcelona
+  deposited in PRIDE as "MSstats splitplot method for protein quantitation
+  in MS datasets". Thirty commercial proteins, in three subsets of ten, are
+  spiked into an E. coli background in five mixtures, each prepared in
+  triplicate. The runs were acquired by DDA on an LTQ Orbitrap Velos and
+  searched with Proteome Discoverer 1.4 and Mascot 2.5. PRIDE lists no
+  publication for the dataset and no license beyond the EMBL-EBI terms of use.
+  https://www.ebi.ac.uk/pride/archive/projects/PXD005642
+
+Source of the Spectronaut rows
+  A Spectronaut report of the 18 timsTOF Pro diaPASEF runs of conditions A
+  and B in PXD028735, the benchmark of Van Puyvelde et al. (2022) cited above
+  for the AlphaPept file. The deposit holds the raw files but no Spectronaut
+  report. PRIDE lists the deposit under CC0.
+
+Source of the MetaMorpheus rows
+  The 20 runs of PXD003881, the spike-in benchmark of
+
+    Shen, X. et al. IonStar enables high-precision, low-missing-data
+    proteomics quantification in large biological cohorts. Proceedings of
+    the National Academy of Sciences 115, E4767-E4776 (2018).
+    https://doi.org/10.1073/pnas.1800541115
+
+  in which E. coli lysate is spiked into human lysate at five levels, with
+  four runs at each level. The export comes from the reprocessing of these
+  runs with MetaMorpheus and FlashLFQ by
+
+    Solivais, A. J. et al. Improved detection of differentially abundant
+    proteins through FDR-control of peptide-identity-propagation. Journal of
+    Proteome Research 24, 4437-4449 (2025).
+    https://doi.org/10.1021/acs.jproteome.5c00065
+
+  It is not one of the files deposited with that article in PRIDE as
+  PXD057758, whose peak tables differ from it in protein groups and
+  intensities. PRIDE lists no license for PXD003881 beyond the EMBL-EBI
+  terms of use.
+
 raw_trials_benchmark_20261007_163702.rds
 downstream_panels.rds
 benchmark_columns.rds

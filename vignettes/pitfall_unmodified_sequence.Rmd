@@ -174,3 +174,9 @@ Over the `r nrow(counts)` comparisons, the base sequence changes the call of
   `export[Base.Sequence != Full.Sequence]` on the full export.
 - A peptide that the export reports with and without a modification must stay
   two features.
+
+# Session information
+
+```{r sessioninfo}
+sessionInfo()
+```

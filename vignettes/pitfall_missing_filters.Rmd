@@ -198,3 +198,9 @@ them near the threshold.
   filters returns none.
 - After converting, `attr(converted, "diagnostics")` lists the filters that
   were applied and those that were skipped.
+
+# Session information
+
+```{r sessioninfo}
+sessionInfo()
+```
