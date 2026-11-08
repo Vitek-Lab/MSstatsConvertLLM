@@ -1,31 +1,18 @@
----
-title: "1. Reproducing the benchmark of models and prompts"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{1. Reproducing the benchmark of models and prompts}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
+# Reproducing the benchmark of the manuscript
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
+This directory is not part of the package. It shows how to reproduce Table 2
+and the downstream figure of the manuscript from the saved results in
+`inst/extdata`, and how to rerun the benchmark. Run the code from the root of
+the repository, with the package installed or loaded with
+`devtools::load_all()`. The saved results need no language model, API key or
+network connection.
 
-This vignette reproduces the evaluation of the LLM-based converter described in
-the accompanying manuscript. All results are read from two small files
-distributed with the package, so the vignette runs without a language model, an
-API key or a network connection. The last section lists the settings and
-scripts that produced these files.
-
-```{r setup, message = FALSE}
+```r
 library(MSstatsConvertLLM)
 library(data.table)
 ```
 
-# What was compared
+## What was compared
 
 The benchmark asked four models, three local models served with Ollama and one
 hosted model, to map the columns of the output of three spectral processing
@@ -35,54 +22,22 @@ repeated three times, which gives 288 trials. The prompt variants are lean,
 constrained, filter_aware and constrained_filter, and two revisions (v2 and v3)
 of the two constrained variants.
 
-```{r dimensions}
-trials <- readRDS(system.file("extdata", "raw_trials_benchmark_20261007_163702.rds",
-                              package = "MSstatsConvertLLM"))
+```r
+trials <- readRDS("inst/extdata/raw_trials_benchmark_20261007_163702.rds")
 length(trials)
 
 table(vapply(trials, `[[`, "", "model"), vapply(trials, `[[`, "", "tool"))
 names(PROMPT_VERSIONS)
 ```
 
-# One saved conversion specification
-
 Each trial stores the output of `run_benchmark_trial()`, including the
-conversion specification returned by the model. The conversion specification
-below was returned by deepseek-r1-14b with the filter-aware prompt for the
-Spectronaut dataset. For each MSstats field, it gives the chosen column and a
-confidence, and it lists the filters that the model proposed.
+conversion specification returned by the model. `score_trial()` compares the
+mappings with the gold standard, which was read from the source code of the
+hand-written converter. A strict match requires the default column of the
+converter, and an acceptable match allows any column that the converter
+accepts.
 
-```{r one-mapping}
-pick <- function(model, tool, prompt, rep = 1L) {
-  Filter(function(x) x$model == model && x$tool == tool &&
-           x$prompt == prompt && x$rep == rep, trials)[[1]]
-}
-
-trial <- pick("deepseek-r1-14b", "spectronaut", "filter_aware")
-trial$mapping$mappings
-trial$mapping$filters
-```
-
-`validate_mapping()` checks the conversion specification itself, for example
-that no column is assigned to two fields.
-
-```{r validate}
-validate_mapping(trial$mapping)
-```
-
-`score_trial()` compares the mappings with the gold standard, which was read
-from the source code of the hand-written converter. A strict match requires the
-default column of the converter, and an acceptable match allows any column that
-the converter accepts. In this trial, `PG.ProteinAccessions` and
-`F.NormalizedPeakArea` are accepted alternatives to the default columns, so all
-eight fields are acceptable. The model also proposed both filters that the
-hand-written Spectronaut converter applies.
-
-```{r scorecard}
-invisible(print_scorecard(score_trial(trial), trial))
-```
-
-# Accuracy of the mappings
+## Table 2
 
 Table 2 of the manuscript reports, for each model and prompt, the proportion of
 correct decisions over the five essential fields (ProteinName, PeptideSequence,
@@ -92,14 +47,13 @@ in the output. A decision is correct when the chosen column is one that the
 hand-written converter accepts. The last row gives the proportion of trials
 whose conversion ran.
 
-```{r table2}
+```r
 ESSENTIAL <- c("ProteinName", "PeptideSequence", "PrecursorCharge",
                "Run", "Intensity")
 MODELS <- c("llama3.2-3b", "llama3.1-8b", "deepseek-r1-14b", "claude-sonnet")
 
 # The header of each tool's output, which decides whether a chosen column exists.
-columns <- readRDS(system.file("extdata", "benchmark_columns.rds",
-                               package = "MSstatsConvertLLM"))
+columns <- readRDS("inst/extdata/benchmark_columns.rds")
 
 scored <- rbindlist(lapply(trials, function(tr) {
   s <- score_trial(tr)[field %in% ESSENTIAL]
@@ -126,10 +80,10 @@ table2[, (MODELS) := lapply(.SD, round, 3), .SDcols = MODELS]
 table2
 ```
 
-The following chunk compares these values with the values printed in the
+The following code compares these values with the values printed in the
 manuscript, and lists any value that differs.
 
-```{r compare-paper}
+```r
 paper <- data.table(
   prompt            = c(names(PROMPT_VERSIONS), "conversion ran"),
   `llama3.2-3b`     = c(0.800, 0.667, 0.700, 0.667, 0.800, 0.800, 0.800, 0.600, 0.833),
@@ -144,60 +98,21 @@ differences <- merge(long(table2), long(paper), by = c("prompt", "model"),
 if (nrow(differences) == 0) "every cell matches the paper" else differences
 ```
 
-# Converting with a saved conversion specification
-
-A saved conversion specification can be passed directly to
-`LLMtoMSstatsFormat()`. The conversion specification below was returned for
-the Proteome Discoverer dataset. The Proteome Discoverer example file
-distributed with MSstatsConvert has the same columns, so the conversion
-specification can be applied to it.
-
-```{r convert, message = FALSE, warning = FALSE}
-pd_trial <- pick("deepseek-r1-14b", "proteome_discoverer", "filter_aware")
-input <- load_test_dataset("proteome_discoverer", source = "fixture")
-annotation <- fread(system.file("tinytest/raw_data/PD/annot_pd.csv",
-                                package = "MSstatsConvert"))
-
-converted <- LLMtoMSstatsFormat(input = input, annotation = annotation,
-                                llm_mapping = pd_trial$mapping,
-                                use_log_file = FALSE, verbose = FALSE)
-head(converted, 3)
-```
-
-The `diagnostics` attribute lists which of the proposed filters were applied
-and which were skipped.
-
-```{r diagnostics}
-attr(converted, "diagnostics")$applied_filters
-attr(converted, "diagnostics")$skipped_filters
-```
-
-The converted table is in the MSstats format, and `dataProcess()` takes it
-without further changes.
-
-```{r dataprocess, message = FALSE, warning = FALSE, results = "hide"}
-processed <- MSstats::dataProcess(converted, use_log_file = FALSE)
-```
-
-```{r dataprocess-show}
-head(processed$ProteinLevelData, 3)
-```
-
-# Differential abundance results
+## The downstream figure
 
 The manuscript compares the differential abundance results of the hand-written
 converter and the LLM-based converter for six choices that the models made in
-the conversion specification. The table distributed with the package holds, for
-each choice, one row per protein and comparison, with the adjusted p-value from
-each converter. The counts below are the significant proteins, the spiked
-proteins among them, the proteins whose significance changed, and how many of
-those were near the threshold, i.e., had an adjusted p-value of 0.2 or less with
-the converter that did not call them. They are the counts reported in the
-manuscript.
+the conversion specification. The saved table holds, for each choice, one row
+per protein and comparison, with the adjusted p-value from each converter. The
+counts below are the significant proteins, the spiked proteins among them, the
+proteins whose significance changed, and how many of those were near the
+threshold, i.e., had an adjusted p-value of 0.2 or less with the converter that
+did not call them. They are the counts reported in the manuscript. The
+vignettes "2. Checking the intensity column", "3. Checking the filters" and
+"4. Checking the peptide sequence" walk through three of the six choices.
 
-```{r panels}
-panels <- readRDS(system.file("extdata", "downstream_panels.rds",
-                              package = "MSstatsConvertLLM"))
+```r
+panels <- readRDS("inst/extdata/downstream_panels.rds")
 ALPHA <- 0.05   # significance
 CAP   <- 20     # display cap on -log10 adjusted p
 NEAR  <- 0.20   # a disagreement is near the threshold below this adjusted p
@@ -220,7 +135,7 @@ The figure redraws the six panels. Each point is one protein in one comparison,
 and points on the dashed line have the same adjusted p-value with both
 converters.
 
-```{r figure, fig.width = 7.2, fig.height = 6.8, message = FALSE}
+```r
 library(ggplot2)
 
 strips <- unique(panels[, .(panel, data)])[order(panel)]
@@ -250,13 +165,13 @@ ggplot(points, aes(x, y, colour = truth)) +
         panel.grid.minor = element_blank())
 ```
 
-# Rerunning the benchmark
+## Rerunning the benchmark
 
 The results above were produced with the settings and scripts below. Rerunning
 them requires Ollama with the three local models, an Anthropic API key in
-`ANTHROPIC_API_KEY` for the hosted model, and a copy of the GitHub repository,
-since the scripts and the input files are not part of the installed package. The
-local models were run at temperature 0 with a fixed seed. Ollama reuses the
+`ANTHROPIC_API_KEY` for the hosted model, and, for the comparison scripts, the
+full exports of the three datasets in `data/`, which are not in the repository.
+The local models were run at temperature 0 with a fixed seed. Ollama reuses the
 cached beginning of the previous request, so the first call after a change of
 prompt can differ from the following calls, and it is discarded.
 
@@ -264,7 +179,7 @@ The filter prompts in the package now state that each filter describes the rows
 to keep. To rerun the benchmark exactly as in the manuscript, use the prompts of
 the tag benchmark-2026-10.
 
-```{r ollama-settings, eval = FALSE}
+```r
 # create_chat() passes these settings to ellmer. MSSTATS_OLLAMA_URL is read on
 # every use, so it can be set after the package is attached.
 Sys.setenv(MSSTATS_OLLAMA_URL = "http://localhost:11434")
@@ -272,7 +187,7 @@ ellmer::params(format = "json", temperature = 0, top_p = 1, seed = 1,
                num_ctx = 4096, num_predict = -1)
 ```
 
-```{r rerun-benchmark, eval = FALSE}
+```r
 TOOLS <- c("spectronaut", "proteome_discoverer", "metamorpheus")
 
 for (model in names(MODEL_REGISTRY)) {
@@ -294,24 +209,21 @@ for (model in names(MODEL_REGISTRY)) {
 
 `run_all.R` runs this loop and saves every trial. The differential abundance
 results come from six runs of the three comparison scripts, and
-`inst/scripts/make_benchmark_data.R` reduces their output to the table used
-above. The commands are run from the root of the repository.
+`inst/scripts/make_benchmark_data.R` reduces their output to the tables used
+above. `inst/scripts/make_case_study_data.R` then cuts the files that the
+case-study vignettes read from these tables. The commands are run from the
+root of the repository.
 
-```{r rerun-downstream, eval = FALSE}
-system("Rscript run_all.R --source benchmark")
+```sh
+Rscript run_all.R --source benchmark
 
-system("LLM_MODEL=reference REF_SWAP=ProteinName=PG.ProteinNames Rscript compare_puyvelde2022.R")
-system("LLM_MODEL=reference REF_SWAP=Intensity=F.NormalizedPeakArea Rscript compare_puyvelde2022.R")
-system("LLM_MODEL=reference REF_FILTERS=none Rscript compare_puyvelde2022.R")
-system("LLM_MODEL=llama3.1-8b LLM_PROMPT=constrained_v3 Rscript compare_pxd005642.R")
-system("LLM_MODEL=deepseek-r1-14b LLM_PROMPT=filter_aware Rscript compare_pxd005642.R")
-system("LLM_MODEL=llama3.1-8b LLM_PROMPT=lean Rscript compare_solivais.R")
+LLM_MODEL=reference REF_SWAP=ProteinName=PG.ProteinNames Rscript compare_puyvelde2022.R
+LLM_MODEL=reference REF_SWAP=Intensity=F.NormalizedPeakArea Rscript compare_puyvelde2022.R
+LLM_MODEL=reference REF_FILTERS=none Rscript compare_puyvelde2022.R
+LLM_MODEL=llama3.1-8b LLM_PROMPT=constrained_v3 Rscript compare_pxd005642.R
+LLM_MODEL=deepseek-r1-14b LLM_PROMPT=filter_aware Rscript compare_pxd005642.R
+LLM_MODEL=llama3.1-8b LLM_PROMPT=lean Rscript compare_solivais.R
 
-system("Rscript inst/scripts/make_benchmark_data.R")
-```
-
-# Session information
-
-```{r sessioninfo}
-sessionInfo()
+Rscript inst/scripts/make_benchmark_data.R
+Rscript inst/scripts/make_case_study_data.R
 ```

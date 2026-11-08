@@ -2,7 +2,8 @@
 % Please edit documentation in R/LLMtoMSstatsFormat.R
 \name{LLMtoMSstatsFormat}
 \alias{LLMtoMSstatsFormat}
-\title{Convert arbitrary proteomics output to MSstats format using LLM mapping}
+\title{Convert arbitrary proteomics output to MSstats format using an LLM
+conversion specification}
 \usage{
 LLMtoMSstatsFormat(
   input,
@@ -53,5 +54,6 @@ fills intensities above \code{qvalue_cutoff} with NA, treated as censored.}
 data.table in MSstats format, ready for dataProcess()
 }
 \description{
-Convert arbitrary proteomics output to MSstats format using LLM mapping
+Convert arbitrary proteomics output to MSstats format using an LLM
+conversion specification
 }

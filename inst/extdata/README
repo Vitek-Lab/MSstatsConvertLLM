@@ -1,22 +1,11 @@
 Files distributed with MSstatsConvertLLM
 ========================================
 
-raw_trials_benchmark_20261007_163702.rds
-downstream_panels.rds
-benchmark_columns.rds
---------------------------------------------------------------------------
-
-The saved results read by the vignette "1. Reproducing the benchmark of models
-and prompts": the 288 benchmark trials, the per-protein adjusted p-values of
-the differential abundance comparisons in the manuscript, and the column
-names of each public dataset. They were produced from the runs in results/ by
-inst/scripts/make_benchmark_data.R.
-
 AlphaPept_subset.csv
 AlphaPept_annotation.csv
 --------------------------------------------------------------------------
 
-AlphaPept output for the example in the vignette "2. Converting the output
+AlphaPept output for the example in the vignette "1. Converting the output
 of a tool without a converter". MSstatsConvert has no AlphaPept converter, so
 the vignette converts this file with a conversion specification proposed by a
 language model.
@@ -71,3 +60,49 @@ Ollama on a local computer, and is distributed so that the vignette runs
 without a language model.
 
   Rebuild with: Rscript inst/scripts/make_alphapept_specification.R
+
+pd_case_study.rds
+spectronaut_case_study.rds
+metamorpheus_case_study.rds
+--------------------------------------------------------------------------
+
+The saved data read by the vignettes "2. Checking the intensity column"
+(Proteome Discoverer, PXD005642), "3. Checking the filters" (Spectronaut,
+Puyvelde2022) and "4. Checking the peptide sequence" (MetaMorpheus,
+Solivais2024). Each file is a list with
+
+  rows           Rows of the export, with the column names the tool wrote.
+                 The first three are the rows the model was shown. For
+                 Spectronaut, the rows are the fragments of the first
+                 precursor.
+  forms          MetaMorpheus only: the first peptide that the export reports
+                 both with and without a modification, in one run, at one
+                 charge and in one protein group.
+  specification  The conversion specification of the saved benchmark trial
+                 that the downstream comparison used, repeat 1 of
+                 llama3.1-8b with the constrained_v3 prompt (Proteome
+                 Discoverer, Spectronaut) or the lean prompt (MetaMorpheus).
+  results        The case's panel of the downstream figure, from
+                 downstream_panels.rds: one row per protein and comparison,
+                 the hand-written converter in the _h columns and the
+                 LLM-based converter in the _l columns.
+
+The rows come from the deposited datasets of the manuscript, truncated to
+their first rows, in benchmark_data/ of the GitHub repository. The
+specifications and the results are cut from the saved trials and
+downstream_panels.rds below, so nothing is recomputed.
+
+  Rebuild with: Rscript inst/scripts/make_case_study_data.R
+
+raw_trials_benchmark_20261007_163702.rds
+downstream_panels.rds
+benchmark_columns.rds
+--------------------------------------------------------------------------
+
+The saved results of the benchmark in the manuscript: the 288 benchmark
+trials, the per-protein adjusted p-values of the differential abundance
+comparisons in the manuscript, and the column names of each public dataset.
+paper/README.md in the GitHub repository reproduces Table 2 and the
+downstream figure from them, and inst/scripts/make_case_study_data.R cuts the
+case-study files above from the first two. They were produced from the runs
+in results/ by inst/scripts/make_benchmark_data.R.

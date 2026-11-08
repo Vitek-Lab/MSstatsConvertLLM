@@ -27,3 +27,4 @@
 ^diagnose_pd_intensity\.R$
 ^stochasticity\.R$
 ^acquisition_check\.R$
+^paper$

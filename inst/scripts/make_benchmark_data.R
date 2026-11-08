@@ -1,10 +1,10 @@
-# make_benchmark_data.R — build the files the benchmark vignette reads
+# make_benchmark_data.R — build the benchmark files that paper/README.md reads
 #
 # Run from the repository root, where results/ holds the saved runs:
 #   Rscript inst/scripts/make_benchmark_data.R
 #
 # 1. inst/extdata/raw_trials_benchmark_20261007_163702.rds is a straight copy
-#    of the saved trials, so the vignette needs no model and no API key.
+#    of the saved trials, so paper/README.md needs no model and no API key.
 # 2. inst/extdata/downstream_panels.rds is the per-protein adjusted p-values
 #    behind Figure 4, cut down to what the six panels need: one row per
 #    protein and contrast, both paths side by side. The full results are a

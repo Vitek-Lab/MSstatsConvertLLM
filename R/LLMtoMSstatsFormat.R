@@ -6,7 +6,8 @@
 # converters use.
 # ============================================================
 
-#' Convert arbitrary proteomics output to MSstats format using LLM mapping
+#' Convert arbitrary proteomics output to MSstats format using an LLM
+#' conversion specification
 #'
 #' @param input data.table of raw tool output
 #' @param annotation data.table with Run, Condition, BioReplicate columns, or

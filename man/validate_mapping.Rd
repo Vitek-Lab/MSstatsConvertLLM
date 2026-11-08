@@ -2,7 +2,7 @@
 % Please edit documentation in R/benchmark.R
 \name{validate_mapping}
 \alias{validate_mapping}
-\title{Post-hoc validation of an LLM mapping result}
+\title{Post-hoc validation of an LLM conversion specification}
 \usage{
 validate_mapping(mapping_result)
 }

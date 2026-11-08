@@ -1,8 +1,8 @@
 ---
-title: "2. Converting the output of a tool without a converter"
+title: "1. Converting the output of a tool without a converter"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{2. Converting the output of a tool without a converter}
+  %\VignetteIndexEntry{1. Converting the output of a tool without a converter}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -1,0 +1,200 @@
+---
+title: "3. Checking the filters"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{3. Checking the filters}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+knitr::knit_hooks$set(inline = function(x) {
+  if (is.numeric(x)) x <- format(x, big.mark = ",")
+  paste(x, collapse = ", ")
+})
+```
+
+Spectronaut reports every fragment it measured, including fragments with a
+neutral loss and fragments that it excluded from quantification. The
+hand-written converter removes the first and censors the second, by rules
+that the columns of the export do not show, while a conversion specification
+applies only the filters that it lists. This vignette shows the two rules, a
+conversion specification without them, and what they change in the
+differential abundance analysis. The conversion specification and the results
+of the analysis were obtained once and saved, so the vignette runs without a
+language model or the full export.
+
+```{r setup, message = FALSE}
+library(MSstatsConvertLLM)
+library(data.table)
+```
+
+# The export
+
+We use the Spectronaut report of the three-species benchmark of Van Puyvelde
+et al. (2022). Human proteins are present in the same amount in conditions A
+and B, and yeast and *E. coli* proteins are not. We distribute the rows of the
+first precursor in the report, one row for each fragment. The first
+`r formals(infer_specification)$n_preview` are the rows the model was shown.
+
+```{r export}
+case <- readRDS(system.file("extdata", "spectronaut_case_study.rds",
+                            package = "MSstatsConvertLLM"))
+rows <- case$rows
+rows[, .(EG.PrecursorId, F.FrgIon, F.FrgLossType,
+         F.ExcludedFromQuantification, F.PeakArea)]
+```
+
+# The rules of the hand-written converter
+
+`SpectronauttoMSstatsFormat()` keeps only the fragments whose `F.FrgLossType`
+is `noloss`, which removes the
+`r rows[F.FrgLossType != "noloss", F.FrgIon]` fragment that lost
+`r rows[F.FrgLossType != "noloss", F.FrgLossType]`. This is filtering. It also
+sets the intensities of the fragments whose `F.ExcludedFromQuantification` is
+`TRUE` to missing, which MSstats treats as censored. This is censoring, which
+the converter's argument `excludedFromQuantificationFilter` turns on by
+default.
+
+```{r converter-default}
+defaults <- formals(MSstatsConvert::SpectronauttoMSstatsFormat)
+defaults$excludedFromQuantificationFilter
+```
+
+The rows come from a single run, so we keep the features with few
+measurements. The censored fragments have no intensity left in that run, so
+the converter drops them as well.
+
+```{r hand}
+hand <- MSstatsConvert::SpectronauttoMSstatsFormat(
+  rows, removeFewMeasurements = FALSE, use_log_file = FALSE, verbose = FALSE)
+hand[, c("FragmentIon", "ProductCharge", "Intensity")]
+```
+
+# A conversion specification without them
+
+A prompt that does not ask for filters returns a conversion specification
+without them. We obtained the one below with llama3.1-8b and the
+constrained_v3 prompt, in the benchmark of the manuscript.
+
+```{r infer-live, eval = FALSE}
+specification <- infer_specification(rows, "llama3.1-8b", "constrained_v3",
+                                     acquisition = "DIA")
+```
+
+Here, we read the saved conversion specification instead. It has no filters.
+
+```{r infer-saved}
+specification <- case$specification
+as.data.frame(specification$mappings)[, c("field", "from")]
+NROW(specification$filters)
+```
+
+For some fields, it also reads a different column from the hand-written
+converter, as listed below. So that only the filters differ, we set every
+column to the one that the hand-written converter reads, which `GROUND_TRUTH`
+lists first. This is the conversion specification behind the saved results
+below.
+
+```{r same-columns}
+converter <- vapply(GROUND_TRUTH$spectronaut, `[`, "", 1)
+fields <- specification$mappings$field
+fields[specification$mappings$from != converter[fields]]
+specification$mappings$from <- unname(converter[fields])
+```
+
+Converted by the LLM-based converter with this conversion specification, the
+same rows keep every fragment. The excluded fragments keep their intensities,
+and the two `r rows[F.FrgLossType != "noloss", F.FrgIon]` rows, with and
+without the neutral loss, share the fragment name, so the converter takes them
+as two measurements of one feature and keeps the larger.
+
+```{r llm}
+llm <- LLMtoMSstatsFormat(input = rows, llm_mapping = specification,
+                          removeFewMeasurements = FALSE,
+                          use_log_file = FALSE, verbose = FALSE)
+llm[, c("FragmentIon", "ProductCharge", "Intensity")]
+```
+
+# Differential abundance results
+
+We converted the full report with the hand-written converter and with this
+conversion specification, and analyzed both with MSstats, as below. The
+script `compare_puyvelde2022.R` in the GitHub repository of the package runs
+these steps, with `REF_FILTERS=none`.
+
+```{r analysis-live, eval = FALSE}
+report <- fread("report_cut.tsv")
+annotation <- fread("annot.csv")
+
+converted <- list(
+  hand = MSstatsConvert::SpectronauttoMSstatsFormat(report,
+                                                    annotation = annotation),
+  llm  = LLMtoMSstatsFormat(normalize_headers(report), annotation = annotation,
+                            llm_mapping = specification))
+processed <- lapply(converted, MSstats::dataProcess,
+                    normalization = "equalizeMedians")
+contrast <- matrix(c(1, -1), nrow = 1, dimnames = list("A-B", c("A", "B")))
+compared <- lapply(processed, function(p) MSstats::groupComparison(contrast, p))
+```
+
+Here, we read the saved results instead. They have one row per protein. For
+each converter, they give the adjusted p-value, `adjp_h` for the hand-written
+converter and `adjp_l` for the LLM-based converter, and whether the protein
+was called significant, `sig_h` and `sig_l`. `spiked` marks the yeast and
+*E. coli* proteins, whose amount changes, and `in_h` and `in_l` say whether
+each converter's results include the protein. A protein that MSstats could not
+test, because one condition has no measurement, is never called significant,
+whatever its adjusted p-value.
+
+```{r results}
+results <- case$results
+head(results, 3)
+```
+
+The table below counts the proteins called significant by each converter, and
+the yeast and *E. coli* proteins among them.
+
+```{r counts}
+counts <- results[, .(hand              = sum(sig_h, na.rm = TRUE),
+                      hand_spiked       = sum(sig_h & spiked, na.rm = TRUE),
+                      no_filters        = sum(sig_l, na.rm = TRUE),
+                      no_filters_spiked = sum(sig_l & spiked, na.rm = TRUE)),
+                  by = .(comparison = Label)]
+counts
+```
+
+Without the two rules, the LLM-based converter calls `r sum(counts$no_filters)`
+proteins significant, against `r sum(counts$hand)` with the hand-written
+converter. The totals are close, but the two converters do not call the same
+proteins. A call changed when one converter called the protein significant
+and the other did not. We count it as near the threshold when the converter
+that did not call the protein significant still gave it an adjusted p-value of
+`NEAR` or less.
+
+```{r changed}
+NEAR <- 0.2
+changed <- results[in_h & in_l][xor(sig_h %in% TRUE, sig_l %in% TRUE)]
+near <- changed[pmax(adjp_h, adjp_l, na.rm = TRUE) <= NEAR]
+c(changed = nrow(changed), near_threshold = nrow(near))
+```
+
+The two rules change the call of `r nrow(changed)` proteins, `r nrow(near)` of
+them near the threshold.
+
+# What to check
+
+- Whether the hand-written converter of the tool, when there is one, removes
+  or censors rows by rules that the columns do not show. For Spectronaut,
+  these are the fragments with a neutral loss and the fragments excluded from
+  quantification.
+- Whether the conversion specification has a filter for each rule. Here, the
+  filters keep the rows whose `F.FrgLossType` is `noloss` and the rows whose
+  `F.ExcludedFromQuantification` is `FALSE`. A prompt that does not ask for
+  filters returns none.
+- After converting, `attr(converted, "diagnostics")` lists the filters that
+  were applied and those that were skipped.

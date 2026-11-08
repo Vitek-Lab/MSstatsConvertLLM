@@ -1,0 +1,193 @@
+---
+title: "2. Checking the intensity column"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{2. Checking the intensity column}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+knitr::knit_hooks$set(inline = function(x) {
+  if (is.numeric(x)) x <- format(x, big.mark = ",")
+  paste(x, collapse = ", ")
+})
+```
+
+A Proteome Discoverer export has two columns that a conversion specification
+can use as the intensity: `Intensity`, a single precursor signal, and
+`Precursor Area`, the integrated peak area. Both look plausible to a language
+model. This vignette shows a conversion specification that chose `Intensity`,
+how to change it to `Precursor Area`, and what the choice does to the
+differential abundance analysis. The conversion specification and the results
+of the analysis were obtained once and saved, so the vignette runs without a
+language model or the full export.
+
+```{r setup, message = FALSE}
+library(MSstatsConvertLLM)
+library(data.table)
+```
+
+# The export
+
+We use the Proteome Discoverer output of PXD005642, a controlled mixture in
+which proteins are spiked in known amounts into a constant *E. coli*
+background. We distribute the rows of the export that the model was shown.
+The benchmark of the manuscript normalized the column names before showing
+them to the model, replacing spaces and other characters by dots, and the
+conversion specification uses these names.
+
+```{r export}
+case <- readRDS(system.file("extdata", "pd_case_study.rds",
+                            package = "MSstatsConvertLLM"))
+export <- normalize_headers(case$rows)
+export[, .(Protein.Group.Accessions, Sequence, Charge, Intensity,
+           Precursor.Area)]
+```
+
+# Inferring the conversion specification
+
+`infer_specification()` sends the model the column names and the first
+`r formals(infer_specification)$n_preview` rows of the export. We obtained the
+saved conversion specification with the call below, using llama3.1-8b and the
+constrained_v3 prompt, in the benchmark of the manuscript.
+
+```{r infer-live, eval = FALSE}
+specification <- infer_specification(export, "llama3.1-8b", "constrained_v3",
+                                     acquisition = "DDA")
+```
+
+Here, we read the saved conversion specification instead.
+
+```{r infer-saved}
+specification <- case$specification
+as.data.frame(specification$mappings)[, c("field", "from", "confidence")]
+```
+
+# Checking the intensity column
+
+The model chose `Intensity`. In the example rows, both `Intensity` and
+`Precursor.Area` are positive numbers, so neither looks wrong on its own. They
+do not measure the same quantity, though: their ratio changes from row to row.
+
+```{r candidates}
+export[, .(Intensity, Precursor.Area,
+           ratio = round(Precursor.Area / Intensity))]
+```
+
+`Intensity` is a single precursor signal, recorded for each match, while
+`Precursor Area` is the integrated area of the precursor's peak. The
+hand-written converter, `PDtoMSstatsFormat()`, reads `Precursor Area` unless
+told otherwise.
+
+```{r converter-default}
+formals(MSstatsConvert::PDtoMSstatsFormat)$which.quantification
+```
+
+The converter can also read `Intensity`, so the gold standard of the benchmark
+accepts it, and the benchmark counted this choice as correct.
+
+```{r gold-standard}
+GROUND_TRUTH$proteome_discoverer$Intensity
+```
+
+# Changing the conversion specification
+
+The mappings are a data frame, so you can change the intensity column before
+converting. Check that the new column exists in the export.
+
+```{r fix}
+fixed <- specification
+fixed$mappings$from[fixed$mappings$field == "Intensity"] <- "Precursor.Area"
+as.data.frame(fixed$mappings)[fixed$mappings$field == "Intensity",
+                              c("field", "from")]
+"Precursor.Area" %in% names(export)
+```
+
+# Differential abundance results
+
+We converted the full export with the hand-written converter, which reads
+`Precursor Area`, and with the LLM-based converter and the model's conversion
+specification, which reads `Intensity`. We then analyzed both with MSstats, as
+below. The script `compare_pxd005642.R` in the GitHub repository of the
+package runs these steps.
+
+```{r analysis-live, eval = FALSE}
+export <- fread("ControlMixture_DDA_ProteomeDiscoverer_input.csv")
+annotation <- fread("annotation.csv")
+
+converted <- list(
+  hand = MSstatsConvert::PDtoMSstatsFormat(export, annotation = annotation),
+  llm  = LLMtoMSstatsFormat(normalize_headers(export), annotation = annotation,
+                            llm_mapping = specification))
+processed <- lapply(converted, MSstats::dataProcess,
+                    normalization = "equalizeMedians",
+                    featureSubset = "topN", n_top_feature = 3)
+# contrast: one row for each pair of mixtures in which every spiked protein
+# changes in amount
+compared <- lapply(processed, function(p) MSstats::groupComparison(contrast, p))
+```
+
+Here, we read the saved results instead. They have one row per protein and
+comparison. For each converter, they give the adjusted p-value, `adjp_h` for
+the hand-written converter and `adjp_l` for the LLM-based converter, and
+whether the protein was called significant, `sig_h` and `sig_l`. `spiked`
+marks the spiked proteins, whose amount changes in every comparison, and
+`in_h` and `in_l` say whether each converter's results include the protein. A
+protein that MSstats could not test, because one condition has no measurement,
+is never called significant, whatever its adjusted p-value.
+
+```{r results}
+results <- case$results
+head(results, 3)
+```
+
+For each comparison, the table below counts the proteins called significant
+with each column, and the spiked proteins among them.
+
+```{r counts}
+counts <- results[, .(area             = sum(sig_h, na.rm = TRUE),
+                      area_spiked      = sum(sig_h & spiked, na.rm = TRUE),
+                      intensity        = sum(sig_l, na.rm = TRUE),
+                      intensity_spiked = sum(sig_l & spiked, na.rm = TRUE)),
+                  by = .(comparison = Label)]
+counts
+```
+
+Over the `r nrow(counts)` comparisons, the hand-written converter, with
+`Precursor Area`, calls `r sum(counts$area)` proteins significant,
+`r sum(counts$area_spiked)` of them spiked. The LLM-based converter, with
+`Intensity`, calls `r sum(counts$intensity)`, `r sum(counts$intensity_spiked)`
+of them spiked. The choice of the column decides how much of the true change
+the analysis finds.
+
+A call changed when one converter called the protein significant and the
+other did not. We count it as near the threshold when the converter that did
+not call the protein significant still gave it an adjusted p-value of `NEAR`
+or less.
+
+```{r changed}
+NEAR <- 0.2
+changed <- results[in_h & in_l][xor(sig_h %in% TRUE, sig_l %in% TRUE)]
+near <- changed[pmax(adjp_h, adjp_l, na.rm = TRUE) <= NEAR]
+c(changed = nrow(changed), near_threshold = nrow(near))
+```
+
+Only `r nrow(near)` of the `r nrow(changed)` changed calls were near the
+threshold, so the choice of the column does not just move borderline proteins
+across it.
+
+# What to check
+
+- Which column the conversion specification reads as `Intensity`. In a
+  Proteome Discoverer export, prefer the integrated peak area,
+  `Precursor Area`, to the single precursor signal `Intensity`.
+- When the export has more than one intensity column, compare them on the
+  example rows. Columns whose ratio changes from row to row measure different
+  things, and choosing between them changes the results.
+- When MSstatsConvert has a converter for the tool, compare the conversion
+  specification with the columns that the converter reads by default.

@@ -30,7 +30,7 @@ cat(sprintf("Ollama at %s, model %s, prompt %s\n", OLLAMA_URL, MODEL, PROMPT))
 cat("Warm-up call, discarded ...\n")
 invisible(infer_specification(input, MODEL, PROMPT, acquisition = "DDA"))
 
-cat("Inferring the mapping ...\n")
+cat("Inferring the conversion specification ...\n")
 mapping <- infer_specification(input, MODEL, PROMPT, acquisition = "DDA")
 
 cat(sprintf("Model took %.1f s\n", attr(mapping, "elapsed_sec")))

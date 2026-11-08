@@ -53,7 +53,7 @@ create_chat <- function(model_key) {
 }
 
 # ------------------------------------------------------------------
-# Infer a mapping for any table of tool output
+# Infer a conversion specification for any table of tool output
 # ------------------------------------------------------------------
 
 #' Infer an MSstats conversion specification for a table of tool output
@@ -74,11 +74,11 @@ create_chat <- function(model_key) {
 #' @param allow_transforms Enable packed-column transform detection.
 #' @param use_structured Use `chat_structured()` (`TRUE`) or raw `chat()`
 #'   (`FALSE`).
-#' @return The parsed mapping: a list with `mappings`, `confidence`, `notes`
-#'   and `warnings`, plus `filters` for a filter-aware prompt. This is the
-#'   object [run_benchmark_trial()] returns as its `mapping` element and the one
-#'   [LLMtoMSstatsFormat()] takes as `llm_mapping`. How long the model took is
-#'   attached as the `elapsed_sec` attribute.
+#' @return The parsed conversion specification: a list with `mappings`,
+#'   `confidence`, `notes` and `warnings`, plus `filters` for a filter-aware
+#'   prompt. This is the object [run_benchmark_trial()] returns as its `mapping`
+#'   element and the one [LLMtoMSstatsFormat()] takes as `llm_mapping`. How long
+#'   the model took is attached as the `elapsed_sec` attribute.
 #' @details Requires the optional `ellmer` package and a running model backend
 #'   (e.g. Ollama).
 #' @export
@@ -152,7 +152,8 @@ infer_specification <- function(data,
 #' Run one schema-inference trial
 #'
 #' Loads a tool's test dataset, builds the prompt, queries a local model, and
-#' returns the parsed mapping together with validation and timing metadata.
+#' returns the parsed conversion specification together with validation and
+#' timing metadata.
 #' Requires the optional `ellmer` package and a running model backend
 #' (e.g. Ollama).
 #'
@@ -209,7 +210,7 @@ run_benchmark_trial <- function(model_key,
 # Post-hoc validation of LLM mapping output
 # ------------------------------------------------------------------
 
-#' Post-hoc validation of an LLM mapping result
+#' Post-hoc validation of an LLM conversion specification
 #'
 #' Catches issues the LLM gets wrong regardless of prompt: duplicate column
 #' assignments, missing required fields, and out-of-range confidences.

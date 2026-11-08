@@ -33,11 +33,11 @@ first \code{n_preview} rows are sent to the model.}
 (\code{FALSE}).}
 }
 \value{
-The parsed mapping: a list with \code{mappings}, \code{confidence}, \code{notes}
-and \code{warnings}, plus \code{filters} for a filter-aware prompt. This is the
-object \code{\link[=run_benchmark_trial]{run_benchmark_trial()}} returns as its \code{mapping} element and the one
-\code{\link[=LLMtoMSstatsFormat]{LLMtoMSstatsFormat()}} takes as \code{llm_mapping}. How long the model took is
-attached as the \code{elapsed_sec} attribute.
+The parsed conversion specification: a list with \code{mappings},
+\code{confidence}, \code{notes} and \code{warnings}, plus \code{filters} for a filter-aware
+prompt. This is the object \code{\link[=run_benchmark_trial]{run_benchmark_trial()}} returns as its \code{mapping}
+element and the one \code{\link[=LLMtoMSstatsFormat]{LLMtoMSstatsFormat()}} takes as \code{llm_mapping}. How long
+the model took is attached as the \code{elapsed_sec} attribute.
 }
 \description{
 Builds the data preview, asks a model to map the columns onto the MSstats

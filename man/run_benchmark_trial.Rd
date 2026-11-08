@@ -40,7 +40,8 @@ A list with \code{model}, \code{tool}, \code{prompt}, \code{mapping} (parsed),
 }
 \description{
 Loads a tool's test dataset, builds the prompt, queries a local model, and
-returns the parsed mapping together with validation and timing metadata.
+returns the parsed conversion specification together with validation and
+timing metadata.
 Requires the optional \code{ellmer} package and a running model backend
 (e.g. Ollama).
 }

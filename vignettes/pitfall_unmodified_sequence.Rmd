@@ -1,0 +1,176 @@
+---
+title: "4. Checking the peptide sequence"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{4. Checking the peptide sequence}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+knitr::knit_hooks$set(inline = function(x) {
+  if (is.numeric(x)) x <- format(x, big.mark = ",")
+  paste(x, collapse = ", ")
+})
+```
+
+A MetaMorpheus export has two peptide sequence columns: `Full Sequence`,
+which includes the modifications, and `Base Sequence`, which does not. MSstats
+needs the sequence with the modifications, since otherwise the modified and
+unmodified forms of a peptide are merged into one feature. In the rows that a
+language model is shown, the two columns are often the same, since most
+peptides carry no modification. This vignette shows the two columns, the
+example rows where they look the same, and what the choice does to the
+differential abundance analysis. The conversion specification and the results
+of the analysis were obtained once and saved, so the vignette runs without a
+language model or the full export.
+
+```{r setup, message = FALSE}
+library(MSstatsConvertLLM)
+library(data.table)
+```
+
+# The export
+
+We use the MetaMorpheus output of the Solivais2024 benchmark, in which
+*E. coli* proteins are spiked in different amounts into a constant human
+background. We distribute the rows of the export that the model was shown. The
+benchmark of the manuscript normalized the column names before showing them to
+the model, replacing spaces and other characters by dots, and the conversion
+specification uses these names. In these rows, the base and the full sequence
+are the same.
+
+```{r export}
+case <- readRDS(system.file("extdata", "metamorpheus_case_study.rds",
+                            package = "MSstatsConvertLLM"))
+export <- normalize_headers(case$rows)
+export[, .(Base.Sequence, Full.Sequence, Precursor.Charge, Peak.intensity)]
+all(export$Base.Sequence == export$Full.Sequence)
+```
+
+# Inferring the conversion specification
+
+`infer_specification()` sends the model the column names and the first
+`r formals(infer_specification)$n_preview` rows of the export. We obtained the
+saved conversion specification with the call below, using llama3.1-8b and the
+lean prompt, in the benchmark of the manuscript.
+
+```{r infer-live, eval = FALSE}
+specification <- infer_specification(export, "llama3.1-8b", "lean",
+                                     acquisition = "DDA")
+```
+
+Here, we read the saved conversion specification instead.
+
+```{r infer-saved}
+specification <- case$specification
+as.data.frame(specification$mappings)[, c("field", "from", "confidence")]
+```
+
+# Checking the peptide sequence
+
+The model chose `Base.Sequence`, the sequence without the modifications. The
+example rows give no reason to prefer either column, since the two are the
+same there. They differ on modified peptides. The export reports the peptide
+below with and without the oxidation of a methionine, in the same run, at the
+same charge and in the same protein group.
+
+```{r forms}
+forms <- normalize_headers(case$forms)
+forms[, .(Base.Sequence, Full.Sequence, Precursor.Charge, Peak.intensity)]
+```
+
+Read by the full sequence, the two rows are two peptides. Read by the base
+sequence, they are one, and the LLM-based converter takes them as two
+measurements of one feature and keeps the larger.
+
+```{r count-forms}
+c(full = uniqueN(forms$Full.Sequence), base = uniqueN(forms$Base.Sequence))
+```
+
+The hand-written converter, `MetamorpheusToMSstatsFormat()`, reads
+`Full Sequence`, which `GROUND_TRUTH` lists for the peptide sequence.
+
+```{r gold-standard}
+GROUND_TRUTH$metamorpheus$PeptideSequence
+```
+
+# Differential abundance results
+
+We converted the full export with the hand-written converter, which reads
+`Full Sequence`, and with the LLM-based converter and the model's conversion
+specification, which reads `Base Sequence`. We then analyzed both with
+MSstats, as below. The script `compare_solivais.R` in the GitHub repository of
+the package runs these steps, after keeping the peaks of single human or
+*E. coli* protein groups.
+
+```{r analysis-live, eval = FALSE}
+peaks <- fread("QuantifiedPeaks.tsv")
+annotation <- fread("annotation.csv")
+
+converted <- list(
+  hand = MSstatsConvert::MetamorpheusToMSstatsFormat(peaks,
+                                                     annotation = annotation),
+  llm  = LLMtoMSstatsFormat(normalize_headers(peaks), annotation = annotation,
+                            llm_mapping = specification))
+processed <- lapply(converted, MSstats::dataProcess,
+                    normalization = "equalizeMedians")
+# contrast: each condition against condition A
+compared <- lapply(processed, function(p) MSstats::groupComparison(contrast, p))
+```
+
+Here, we read the saved results instead. They have one row per protein and
+comparison. For each converter, they give the adjusted p-value, `adjp_h` for
+the hand-written converter and `adjp_l` for the LLM-based converter, and
+whether the protein was called significant, `sig_h` and `sig_l`. `spiked`
+marks the *E. coli* proteins, whose amount changes in every comparison, and
+`in_h` and `in_l` say whether each converter's results include the protein. A
+protein that MSstats could not test, because one condition has no measurement,
+is never called significant, whatever its adjusted p-value.
+
+```{r results}
+results <- case$results
+head(results, 3)
+```
+
+For each comparison, the table below counts the proteins called significant
+with each sequence column, and the *E. coli* proteins among them.
+
+```{r counts}
+counts <- results[, .(full        = sum(sig_h, na.rm = TRUE),
+                      full_spiked = sum(sig_h & spiked, na.rm = TRUE),
+                      base        = sum(sig_l, na.rm = TRUE),
+                      base_spiked = sum(sig_l & spiked, na.rm = TRUE)),
+                  by = .(comparison = Label)]
+counts
+```
+
+A call changed when one converter called the protein significant and the
+other did not. We count it as near the threshold when the converter that did
+not call the protein significant still gave it an adjusted p-value of `NEAR`
+or less.
+
+```{r changed}
+NEAR <- 0.2
+changed <- results[in_h & in_l][xor(sig_h %in% TRUE, sig_l %in% TRUE)]
+near <- changed[pmax(adjp_h, adjp_l, na.rm = TRUE) <= NEAR]
+c(changed = nrow(changed), near_threshold = nrow(near))
+```
+
+Over the `r nrow(counts)` comparisons, the base sequence changes the call of
+`r nrow(changed)` proteins, `r nrow(near)` of them near the threshold.
+
+# What to check
+
+- Which column the conversion specification reads as `PeptideSequence`. It
+  should be the sequence with the modifications, `Full Sequence` in
+  MetaMorpheus.
+- Do not judge the two columns by the example rows alone, where they are often
+  the same. Look for the rows where they differ, for example with
+  `export[Base.Sequence != Full.Sequence]` on the full export.
+- A peptide that the export reports with and without a modification must stay
+  two features.
