@@ -47,6 +47,12 @@ MODEL_REGISTRY <- list(
 #' @export
 OLLAMA_URL <- Sys.getenv("MSSTATS_OLLAMA_URL", "http://localhost:11434")
 
+# The address new chats actually use. It is read each time a chat is created,
+# so MSSTATS_OLLAMA_URL can change without reinstalling the package.
+# OLLAMA_URL above is fixed when the package is installed, which silently
+# pinned the address after a reinstall; it stays only for scripts that read it.
+.ollama_url <- function() Sys.getenv("MSSTATS_OLLAMA_URL", "http://localhost:11434")
+
 # ------------------------------------------------------------------
 # 2. MSstats target schema
 # ------------------------------------------------------------------
