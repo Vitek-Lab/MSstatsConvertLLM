@@ -1,8 +1,8 @@
 ---
-title: "2. Checking the intensity column"
+title: "2. Case Study: LLM converter assigns different columns for intensity"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{2. Checking the intensity column}
+  %\VignetteIndexEntry{2. Case Study: LLM converter assigns different columns for intensity}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -97,8 +97,9 @@ GROUND_TRUTH$proteome_discoverer$Intensity
 
 # Changing the conversion specification
 
-The mappings are a data frame, so you can change the intensity column before
-converting. Check that the new column exists in the export.
+The conversion specification lists the fields in a data frame, so you can
+change the intensity column before converting. Check that the new column
+exists in the export.
 
 ```{r fix}
 fixed <- specification

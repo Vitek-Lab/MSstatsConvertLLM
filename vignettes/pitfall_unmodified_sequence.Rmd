@@ -1,8 +1,8 @@
 ---
-title: "4. Checking the peptide sequence"
+title: "4. Case Study: LLM converter selects a different column for peptide sequence, leading to marginally different results"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{4. Checking the peptide sequence}
+  %\VignetteIndexEntry{4. Case Study: LLM converter selects a different column for peptide sequence, leading to marginally different results}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

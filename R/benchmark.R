@@ -179,10 +179,9 @@ run_benchmark_trial <- function(model_key,
                                 use_structured = TRUE,
                                 source = "fixture") {
   
-  # Load the data, then infer the mapping. The time infer_specification()
-  # reports is the model call alone, measured where it was measured here before;
-  # it rides back on the result and comes off again, so `mapping` is the bare
-  # object.
+  # Load the data, then infer the conversion specification. The model call is
+  # timed inside infer_specification(), which attaches the time as an attribute;
+  # it is moved to elapsed_sec so that `mapping` holds the bare specification.
   df <- load_test_dataset(tool_name, source = source)
   result <- infer_specification(df, model_key, prompt_key,
                                 acquisition      = acquisition,

@@ -1,8 +1,8 @@
 ---
-title: "3. Checking the filters"
+title: "3. Case Study: LLM converter without filter-aware prompt leads to different results"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{3. Checking the filters}
+  %\VignetteIndexEntry{3. Case Study: LLM converter without filter-aware prompt leads to different results}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

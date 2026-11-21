@@ -32,10 +32,10 @@ names(PROMPT_VERSIONS)
 
 Each trial stores the output of `run_benchmark_trial()`, including the
 conversion specification returned by the model. `score_trial()` compares the
-mappings with the gold standard, which was read from the source code of the
-hand-written converter. A strict match requires the default column of the
-converter, and an acceptable match allows any column that the converter
-accepts.
+column that the conversion specification chose for each field with the gold
+standard, which was read from the source code of the hand-written converter.
+A strict match requires the default column of the converter, and an
+acceptable match allows any column that the converter accepts.
 
 ## Table 2
 
@@ -108,8 +108,11 @@ counts below are the significant proteins, the spiked proteins among them, the
 proteins whose significance changed, and how many of those were near the
 threshold, i.e., had an adjusted p-value of 0.2 or less with the converter that
 did not call them. They are the counts reported in the manuscript. The
-vignettes "2. Checking the intensity column", "3. Checking the filters" and
-"4. Checking the peptide sequence" walk through three of the six choices.
+vignettes "2. Case Study: LLM converter assigns different columns for
+intensity", "3. Case Study: LLM converter without filter-aware prompt leads to
+different results" and "4. Case Study: LLM converter selects a different
+column for peptide sequence, leading to marginally different results" walk
+through three of the six choices.
 
 ```r
 panels <- readRDS("inst/extdata/downstream_panels.rds")

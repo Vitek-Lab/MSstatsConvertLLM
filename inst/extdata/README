@@ -66,10 +66,12 @@ spectronaut_case_study.rds
 metamorpheus_case_study.rds
 --------------------------------------------------------------------------
 
-The saved data read by the vignettes "2. Checking the intensity column"
-(Proteome Discoverer, PXD005642), "3. Checking the filters" (Spectronaut,
-Puyvelde2022) and "4. Checking the peptide sequence" (MetaMorpheus,
-Solivais2024). Each file is a list with
+The saved data read by the vignettes "2. Case Study: LLM converter assigns
+different columns for intensity" (Proteome Discoverer, PXD005642), "3. Case
+Study: LLM converter without filter-aware prompt leads to different results"
+(Spectronaut, Puyvelde2022) and "4. Case Study: LLM converter selects a
+different column for peptide sequence, leading to marginally different
+results" (MetaMorpheus, Solivais2024). Each file is a list with
 
   rows           Rows of the export, with the column names the tool wrote.
                  The first three are the rows the model was shown. For
@@ -82,10 +84,10 @@ Solivais2024). Each file is a list with
                  that the downstream comparison used, repeat 1 of
                  llama3.1-8b with the constrained_v3 prompt (Proteome
                  Discoverer, Spectronaut) or the lean prompt (MetaMorpheus).
-  results        The case's panel of the downstream figure, from
-                 downstream_panels.rds: one row per protein and comparison,
-                 the hand-written converter in the _h columns and the
-                 LLM-based converter in the _l columns.
+  results        The differential analysis results of the case: one row
+                 per protein and comparison, the hand-written converter in
+                 the _h columns and the LLM-based converter in the _l
+                 columns.
 
 The rows come from the deposited datasets of the manuscript, truncated to
 their first rows, in benchmark_data/ of the GitHub repository. The

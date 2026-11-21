@@ -46,14 +46,15 @@ annotation
 # Inferring the conversion specification
 
 `infer_specification()` sends the column names and three example rows of the
-export to the model, and returns the conversion specification that the model
-proposes. We obtained the saved conversion specification with the call below,
-using deepseek-r1-14b and the filter-aware prompt, after one discarded call.
-The script `inst/scripts/make_alphapept_specification.R` repeats it.
+spectral processing tool output to the model, and returns the conversion
+specification that the model proposes. We obtained the saved conversion
+specification with the call below, using deepseek-r1-14b and the filter-aware
+prompt, after one discarded call. The script
+`inst/scripts/make_alphapept_specification.R` repeats it.
 
 ```{r infer-live, eval = FALSE}
-mapping <- infer_specification(input, "deepseek-r1-14b", "filter_aware",
-                               acquisition = "DDA")
+specification <- infer_specification(input, "deepseek-r1-14b", "filter_aware",
+                                     acquisition = "DDA")
 ```
 
 Here, we read the saved conversion specification instead.
@@ -68,7 +69,7 @@ if (!nzchar(path)) {
        "  Rscript inst/scripts/make_alphapept_specification.R\n",
        "then reinstall the package.", call. = FALSE)
 }
-mapping <- readRDS(path)
+specification <- readRDS(path)
 ```
 
 # The proposed conversion specification
@@ -78,8 +79,8 @@ the model chose and its confidence. The export has no fragment ion, product
 charge or Q-value column, so the model left these fields empty, with a
 confidence of zero.
 
-```{r mapping}
-proposed <- as.data.frame(mapping$mappings)
+```{r specification}
+proposed <- as.data.frame(specification$mappings)
 proposed[, c("field", "from", "confidence")]
 ```
 
@@ -105,8 +106,8 @@ head(unique(input[sequence != sequence_naked, .(sequence_naked, sequence)]), 3)
 The model proposed one filter, which keeps the rows that are not decoys.
 
 ```{r check-filters}
-if (NROW(mapping$filters) > 0) {
-  as.data.frame(mapping$filters)[, c("column", "operation", "value")]
+if (NROW(specification$filters) > 0) {
+  as.data.frame(specification$filters)[, c("column", "operation", "value")]
 } else {
   "no filters proposed"
 }
@@ -115,12 +116,14 @@ if (NROW(mapping$filters) > 0) {
 The decoy filter is applied by default. It sets the intensities of the decoy
 matches to missing, and since a decoy feature is then missing in every run,
 MSstats drops it. To keep the decoys, for example to inspect them, drop the
-filter from the conversion specification. Decoy features are usually measured
-in few runs, so the conversion must also keep features with few measurements.
+filter from the conversion specification. Decoy features are usually
+identified in few runs, so the conversion must also keep features with few
+measurements.
 
 ```{r keep-decoys}
-with_decoys <- mapping
-with_decoys$filters <- subset(as.data.frame(mapping$filters), column != "decoy")
+with_decoys <- specification
+with_decoys$filters <- subset(as.data.frame(specification$filters),
+                              column != "decoy")
 NROW(with_decoys$filters)
 ```
 
@@ -133,14 +136,15 @@ converted_with_decoys <- LLMtoMSstatsFormat(input = input, annotation = annotati
 
 # Changing a field by hand
 
-The mappings are a data frame, so you can change any field before converting.
-Here the model already chose the modified sequence, so the line below changes
-nothing, but it shows how to correct the field if the model had chosen the
-stripped sequence.
+The conversion specification lists the fields in a data frame, so you can
+change any field before converting. Here the model already chose the modified
+sequence, so the line below changes nothing, but it shows how to correct the
+field if the model had chosen the stripped sequence.
 
 ```{r fix}
-mapping$mappings$from[mapping$mappings$field == "PeptideSequence"] <- "sequence"
-mapping$mappings[mapping$mappings$field == "PeptideSequence", c("field", "from")]
+is_peptide <- specification$mappings$field == "PeptideSequence"
+specification$mappings$from[is_peptide] <- "sequence"
+specification$mappings[is_peptide, c("field", "from")]
 ```
 
 # Validating the conversion specification
@@ -150,7 +154,7 @@ that no column is assigned to two fields and that no required field is
 missing.
 
 ```{r validate}
-validation <- validate_mapping(mapping)
+validation <- validate_mapping(specification)
 validation$passed
 validation$issues
 ```
@@ -161,10 +165,11 @@ We recommend saving the checked conversion specification and publishing it
 with the analysis. It records how the data were converted, even after the
 model changes.
 
-```{r save-mapping}
-mapping_file <- file.path(tempdir(), "AlphaPept_specification.json")
-jsonlite::write_json(mapping, mapping_file, auto_unbox = TRUE, pretty = TRUE)
-file.exists(mapping_file)
+```{r save-specification}
+specification_file <- file.path(tempdir(), "AlphaPept_specification.json")
+jsonlite::write_json(specification, specification_file,
+                     auto_unbox = TRUE, pretty = TRUE)
+file.exists(specification_file)
 ```
 
 # Converting
@@ -175,14 +180,14 @@ of MSstatsConvert.
 
 ```{r convert, message = FALSE, warning = FALSE}
 converted <- LLMtoMSstatsFormat(input = input, annotation = annotation,
-                                llm_mapping = mapping,
+                                llm_mapping = specification,
                                 use_log_file = FALSE, verbose = FALSE)
 head(converted, 3)
 ```
 
 The `diagnostics` attribute lists the proposed filters that were applied and
-those that were skipped, and any column named in the mappings that does not
-exist in the export.
+those that were skipped, and any column named in the conversion specification
+that does not exist in the export.
 
 ```{r diagnostics}
 diagnostics <- attr(converted, "diagnostics")
