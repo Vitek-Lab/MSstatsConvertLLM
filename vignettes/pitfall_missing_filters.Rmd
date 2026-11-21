@@ -21,19 +21,19 @@ knitr::knit_hooks$set(inline = function(x) {
 Spectronaut reports every fragment it measured, including fragments with a
 neutral loss and fragments that it excluded from quantification. The
 hand-written converter removes the first and censors the second, by rules
-that the columns of the export do not show, while a conversion specification
-applies only the filters that it lists. This vignette shows the two rules, a
-conversion specification without them, and what they change in the
-differential abundance analysis. The conversion specification and the results
-of the analysis were obtained once and saved, so the vignette runs without a
-language model or the full export.
+that the columns of the tool output do not show, while a conversion
+specification applies only the filters that it lists. This vignette shows the
+two rules, a conversion specification without them, and what they change in
+the differential abundance analysis. The conversion specification and the
+results of the analysis were obtained once and saved, so the vignette runs
+without a language model or the full tool output.
 
 ```{r setup, message = FALSE}
 library(MSstatsConvertLLM)
 library(data.table)
 ```
 
-# The export
+# The tool output
 
 We use the Spectronaut report of the three-species benchmark of Van Puyvelde
 et al. (2022). Human proteins are present in the same amount in conditions A
@@ -41,24 +41,24 @@ and B, and yeast and *E. coli* proteins are not. We distribute the rows of the
 first precursor in the report, one row for each fragment. The first
 `r formals(infer_specification)$n_preview` are the rows the model was shown.
 
-```{r export}
+```{r tool-output}
 case <- readRDS(system.file("extdata", "spectronaut_case_study.rds",
                             package = "MSstatsConvertLLM"))
-rows <- case$rows
-rows[, .(EG.PrecursorId, F.FrgIon, F.FrgLossType,
-         F.ExcludedFromQuantification, F.PeakArea)]
+tool_output <- case$tool_output
+tool_output[, .(EG.PrecursorId, F.FrgIon, F.FrgLossType,
+                F.ExcludedFromQuantification, F.PeakArea)]
 ```
 
 # The rules of the hand-written converter
 
 `SpectronauttoMSstatsFormat()` keeps only the fragments whose `F.FrgLossType`
 is `noloss`, which removes the
-`r rows[F.FrgLossType != "noloss", F.FrgIon]` fragment that lost
-`r rows[F.FrgLossType != "noloss", F.FrgLossType]`. This is filtering. It also
-sets the intensities of the fragments whose `F.ExcludedFromQuantification` is
-`TRUE` to missing, which MSstats treats as censored. This is censoring, which
-the converter's argument `excludedFromQuantificationFilter` turns on by
-default.
+`r tool_output[F.FrgLossType != "noloss", F.FrgIon]` fragment that lost
+`r tool_output[F.FrgLossType != "noloss", F.FrgLossType]`. This is filtering.
+It also sets the intensities of the fragments whose
+`F.ExcludedFromQuantification` is `TRUE` to missing, which MSstats treats as
+censored. This is censoring, which the converter's argument
+`excludedFromQuantificationFilter` turns on by default.
 
 ```{r converter-default}
 defaults <- formals(MSstatsConvert::SpectronauttoMSstatsFormat)
@@ -71,7 +71,8 @@ the converter drops them as well.
 
 ```{r hand}
 hand <- MSstatsConvert::SpectronauttoMSstatsFormat(
-  rows, removeFewMeasurements = FALSE, use_log_file = FALSE, verbose = FALSE)
+  tool_output, removeFewMeasurements = FALSE, use_log_file = FALSE,
+  verbose = FALSE)
 hand[, c("FragmentIon", "ProductCharge", "Intensity")]
 ```
 
@@ -82,8 +83,8 @@ without them. We obtained the one below with llama3.1-8b and the
 constrained_v3 prompt, in the benchmark of the manuscript.
 
 ```{r infer-live, eval = FALSE}
-specification <- infer_specification(rows, "llama3.1-8b", "constrained_v3",
-                                     acquisition = "DIA")
+specification <- infer_specification(tool_output, "llama3.1-8b",
+                                     "constrained_v3", acquisition = "DIA")
 ```
 
 Here, we read the saved conversion specification instead. It has no filters.
@@ -96,12 +97,12 @@ NROW(specification$filters)
 
 For some fields, it also reads a different column from the hand-written
 converter, as listed below. So that only the filters differ, we set every
-column to the one that the hand-written converter reads, which `GROUND_TRUTH`
+column to the one that the hand-written converter reads, which `GOLD_STANDARD`
 lists first. This is the conversion specification behind the saved results
 below.
 
 ```{r same-columns}
-converter <- vapply(GROUND_TRUTH$spectronaut, `[`, "", 1)
+converter <- vapply(GOLD_STANDARD$spectronaut, `[`, "", 1)
 fields <- specification$mappings$field
 fields[specification$mappings$from != converter[fields]]
 specification$mappings$from <- unname(converter[fields])
@@ -109,12 +110,12 @@ specification$mappings$from <- unname(converter[fields])
 
 Converted by the LLM-based converter with this conversion specification, the
 same rows keep every fragment. The excluded fragments keep their intensities,
-and the two `r rows[F.FrgLossType != "noloss", F.FrgIon]` rows, with and
+and the two `r tool_output[F.FrgLossType != "noloss", F.FrgIon]` rows, with and
 without the neutral loss, share the fragment name, so the converter takes them
 as two measurements of one feature and keeps the larger.
 
 ```{r llm}
-llm <- LLMtoMSstatsFormat(input = rows, llm_mapping = specification,
+llm <- LLMtoMSstatsFormat(input = tool_output, specification = specification,
                           removeFewMeasurements = FALSE,
                           use_log_file = FALSE, verbose = FALSE)
 llm[, c("FragmentIon", "ProductCharge", "Intensity")]
@@ -135,7 +136,7 @@ converted <- list(
   hand = MSstatsConvert::SpectronauttoMSstatsFormat(report,
                                                     annotation = annotation),
   llm  = LLMtoMSstatsFormat(normalize_headers(report), annotation = annotation,
-                            llm_mapping = specification))
+                            specification = specification))
 processed <- lapply(converted, MSstats::dataProcess,
                     normalization = "equalizeMedians")
 contrast <- matrix(c(1, -1), nrow = 1, dimnames = list("A-B", c("A", "B")))
@@ -171,20 +172,21 @@ counts
 Without the two rules, the LLM-based converter calls `r sum(counts$no_filters)`
 proteins significant, against `r sum(counts$hand)` with the hand-written
 converter. The totals are close, but the two converters do not call the same
-proteins. A call changed when one converter called the protein significant
-and the other did not. We count it as near the threshold when the converter
-that did not call the protein significant still gave it an adjusted p-value of
-`NEAR` or less.
+proteins. The table below counts the proteins that both converters call
+significant and those that only one of them calls significant.
 
-```{r changed}
-NEAR <- 0.2
-changed <- results[in_h & in_l][xor(sig_h %in% TRUE, sig_l %in% TRUE)]
-near <- changed[pmax(adjp_h, adjp_l, na.rm = TRUE) <= NEAR]
-c(changed = nrow(changed), near_threshold = nrow(near))
+```{r overlap}
+overlap <- results[, {
+  h <- sig_h %in% TRUE
+  l <- sig_l %in% TRUE
+  .(both = sum(h & l), hand_only = sum(h & !l), no_filters_only = sum(!h & l))
+}, by = .(comparison = Label)]
+overlap
 ```
 
-The two rules change the call of `r nrow(changed)` proteins, `r nrow(near)` of
-them near the threshold.
+The two converters share `r sum(overlap$both)` significant proteins, while
+`r sum(overlap$hand_only)` are significant only with the two rules and
+`r sum(overlap$no_filters_only)` only without them.
 
 # What to check
 

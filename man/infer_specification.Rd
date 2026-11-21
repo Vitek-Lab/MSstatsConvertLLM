@@ -36,7 +36,7 @@ first \code{n_preview} rows are sent to the model.}
 The parsed conversion specification: a list with \code{mappings},
 \code{confidence}, \code{notes} and \code{warnings}, plus \code{filters} for a filter-aware
 prompt. This is the object \code{\link[=run_benchmark_trial]{run_benchmark_trial()}} returns as its \code{mapping}
-element and the one \code{\link[=LLMtoMSstatsFormat]{LLMtoMSstatsFormat()}} takes as \code{llm_mapping}. How long
+element and the one \code{\link[=LLMtoMSstatsFormat]{LLMtoMSstatsFormat()}} takes as \code{specification}. How long
 the model took is attached as the \code{elapsed_sec} attribute.
 }
 \description{

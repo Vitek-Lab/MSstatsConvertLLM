@@ -18,7 +18,7 @@ run_benchmark_trial(
 \arguments{
 \item{model_key}{Key into \link{MODEL_REGISTRY} (e.g. \code{"llama3.1-8b"}).}
 
-\item{tool_name}{Key into \link{GROUND_TRUTH} / \code{\link[=load_test_dataset]{load_test_dataset()}}.}
+\item{tool_name}{Key into \link{GOLD_STANDARD} / \code{\link[=load_test_dataset]{load_test_dataset()}}.}
 
 \item{prompt_key}{One of \code{names(PROMPT_VERSIONS)} (e.g. \code{"lean"},
 \code{"constrained"}, \code{"constrained_filter"}).}
@@ -35,8 +35,8 @@ run_benchmark_trial(
 \item{source}{\code{"fixture"} or \code{"benchmark"}, passed to \code{\link[=load_test_dataset]{load_test_dataset()}}.}
 }
 \value{
-A list with \code{model}, \code{tool}, \code{prompt}, \code{mapping} (parsed),
-\code{validation}, \code{elapsed_sec}, and \code{timestamp}.
+A list with \code{model}, \code{tool}, \code{prompt}, \code{mapping} (the parsed
+conversion specification), \code{validation}, \code{elapsed_sec}, and \code{timestamp}.
 }
 \description{
 Loads a tool's test dataset, builds the prompt, queries a local model, and

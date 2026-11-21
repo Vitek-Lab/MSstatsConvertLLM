@@ -26,7 +26,7 @@ library(MSstatsConvertLLM)
 library(data.table)
 ```
 
-# The export
+# The tool output
 
 We use the AlphaPept output of the ProteoBench benchmark for label-free
 DDA, a subset of the three-species mixture of Van Puyvelde et al.
@@ -34,7 +34,7 @@ DDA, a subset of the three-species mixture of Van Puyvelde et al.
 conditions A and B, with three runs each. The source, the license and the
 design of the file are described in `inst/extdata/README`.
 
-```{r export}
+```{r tool-output}
 input <- fread(system.file("extdata", "AlphaPept_subset.csv",
                            package = "MSstatsConvertLLM"))
 annotation <- fread(system.file("extdata", "AlphaPept_annotation.csv",
@@ -75,8 +75,8 @@ specification <- readRDS(path)
 # The proposed conversion specification
 
 The conversion specification gives, for each MSstats field, the column that
-the model chose and its confidence. The export has no fragment ion, product
-charge or Q-value column, so the model left these fields empty, with a
+the model chose and its confidence. The tool output has no fragment ion,
+product charge or Q-value column, so the model left these fields empty, with a
 confidence of zero.
 
 ```{r specification}
@@ -87,9 +87,9 @@ proposed[, c("field", "from", "confidence")]
 # Checking the conversion specification
 
 Before converting, check three choices, in this order: the intensity column,
-the peptide sequence and the filters. The intensity must be
-a quantitative column of the export, here `ms1_int_sum_apex_dn`. The peptide
-sequence must be the modified sequence `sequence` rather than the stripped
+the peptide sequence and the filters. The intensity must be a quantitative
+column of the tool output, here `ms1_int_sum_apex_dn`. The peptide sequence
+must be the modified sequence `sequence` rather than the stripped
 sequence `sequence_naked`, since otherwise the modified and unmodified forms
 of a peptide are merged into one feature. The two columns differ on the rows
 shown below.
@@ -129,7 +129,7 @@ NROW(with_decoys$filters)
 
 ```{r keep-decoys-convert, eval = FALSE}
 converted_with_decoys <- LLMtoMSstatsFormat(input = input, annotation = annotation,
-                                            llm_mapping = with_decoys,
+                                            specification = with_decoys,
                                             removeFewMeasurements = FALSE,
                                             use_log_file = FALSE, verbose = FALSE)
 ```
@@ -149,12 +149,12 @@ specification$mappings[is_peptide, c("field", "from")]
 
 # Validating the conversion specification
 
-`validate_mapping()` checks the conversion specification itself, for example
-that no column is assigned to two fields and that no required field is
-missing.
+`validate_specification()` checks the conversion specification itself, for
+example that no column is assigned to two fields and that no required field
+is missing.
 
 ```{r validate}
-validation <- validate_mapping(specification)
+validation <- validate_specification(specification)
 validation$passed
 validation$issues
 ```
@@ -180,14 +180,14 @@ of MSstatsConvert.
 
 ```{r convert, message = FALSE, warning = FALSE}
 converted <- LLMtoMSstatsFormat(input = input, annotation = annotation,
-                                llm_mapping = specification,
+                                specification = specification,
                                 use_log_file = FALSE, verbose = FALSE)
 head(converted, 3)
 ```
 
 The `diagnostics` attribute lists the proposed filters that were applied and
 those that were skipped, and any column named in the conversion specification
-that does not exist in the export.
+that does not exist in the tool output.
 
 ```{r diagnostics}
 diagnostics <- attr(converted, "diagnostics")

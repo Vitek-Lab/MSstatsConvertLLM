@@ -51,7 +51,7 @@ llm_converted <- tryCatch(
   LLMtoMSstatsFormat(
     input        = raw_data,
     annotation   = annotation,
-    llm_mapping  = llm_mapping,
+    specification = llm_mapping,
     verbose      = TRUE,
     use_log_file = FALSE
   ),

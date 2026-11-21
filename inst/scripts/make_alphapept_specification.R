@@ -42,8 +42,8 @@ if (NROW(mapping$filters) > 0) {
   cat("\nNo filters proposed.\n")
 }
 
-validation <- validate_mapping(mapping)
-cat("\nvalidate_mapping passed:", validation$passed, "\n")
+validation <- validate_specification(mapping)
+cat("\nvalidate_specification passed:", validation$passed, "\n")
 if (length(validation$issues)) cat(paste0("  ", validation$issues, collapse = "\n"), "\n")
 
 saveRDS(mapping, OUTPUT)

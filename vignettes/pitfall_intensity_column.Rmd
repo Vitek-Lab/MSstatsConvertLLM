@@ -18,47 +18,48 @@ knitr::knit_hooks$set(inline = function(x) {
 })
 ```
 
-A Proteome Discoverer export has two columns that a conversion specification
-can use as the intensity: `Intensity`, a single precursor signal, and
-`Precursor Area`, the integrated peak area. Both look plausible to a language
-model. This vignette shows a conversion specification that chose `Intensity`,
-how to change it to `Precursor Area`, and what the choice does to the
-differential abundance analysis. The conversion specification and the results
-of the analysis were obtained once and saved, so the vignette runs without a
-language model or the full export.
+The Proteome Discoverer tool output has two columns that a conversion
+specification can use as the intensity: `Intensity`, the precursor's signal at
+the moment its MS/MS spectrum was taken, and `Precursor Area`, the area of its
+elution peak. Both look plausible to a language model. This vignette shows a
+conversion specification that chose `Intensity`, how to change it to
+`Precursor Area`, and what the choice does to the differential abundance
+analysis. The conversion specification and the results of the analysis were
+obtained once and saved, so the vignette runs without a language model or the
+full tool output.
 
 ```{r setup, message = FALSE}
 library(MSstatsConvertLLM)
 library(data.table)
 ```
 
-# The export
+# The tool output
 
 We use the Proteome Discoverer output of PXD005642, a controlled mixture in
 which proteins are spiked in known amounts into a constant *E. coli*
-background. We distribute the rows of the export that the model was shown.
-The benchmark of the manuscript normalized the column names before showing
-them to the model, replacing spaces and other characters by dots, and the
-conversion specification uses these names.
+background. We distribute the rows of the tool output that the model was
+shown. The benchmark of the manuscript normalized the column names before
+showing them to the model, replacing spaces and other characters by dots, and
+the conversion specification uses these names.
 
-```{r export}
+```{r tool-output}
 case <- readRDS(system.file("extdata", "pd_case_study.rds",
                             package = "MSstatsConvertLLM"))
-export <- normalize_headers(case$rows)
-export[, .(Protein.Group.Accessions, Sequence, Charge, Intensity,
-           Precursor.Area)]
+tool_output <- normalize_headers(case$tool_output)
+tool_output[, .(Protein.Group.Accessions, Sequence, Charge, Intensity,
+                Precursor.Area)]
 ```
 
 # Inferring the conversion specification
 
 `infer_specification()` sends the model the column names and the first
-`r formals(infer_specification)$n_preview` rows of the export. We obtained the
-saved conversion specification with the call below, using llama3.1-8b and the
-constrained_v3 prompt, in the benchmark of the manuscript.
+`r formals(infer_specification)$n_preview` rows of the tool output. We obtained
+the saved conversion specification with the call below, using llama3.1-8b and
+the constrained_v3 prompt, in the benchmark of the manuscript.
 
 ```{r infer-live, eval = FALSE}
-specification <- infer_specification(export, "llama3.1-8b", "constrained_v3",
-                                     acquisition = "DDA")
+specification <- infer_specification(tool_output, "llama3.1-8b",
+                                     "constrained_v3", acquisition = "DDA")
 ```
 
 Here, we read the saved conversion specification instead.
@@ -75,14 +76,14 @@ The model chose `Intensity`. In the example rows, both `Intensity` and
 do not measure the same quantity, though: their ratio changes from row to row.
 
 ```{r candidates}
-export[, .(Intensity, Precursor.Area,
-           ratio = round(Precursor.Area / Intensity))]
+tool_output[, .(Intensity, Precursor.Area,
+                ratio = round(Precursor.Area / Intensity))]
 ```
 
-`Intensity` is a single precursor signal, recorded for each match, while
-`Precursor Area` is the integrated area of the precursor's peak. The
-hand-written converter, `PDtoMSstatsFormat()`, reads `Precursor Area` unless
-told otherwise.
+`Intensity` is the precursor's signal at the moment its MS/MS spectrum was
+taken, recorded for each match, while `Precursor Area` is the area of the
+precursor's elution peak. The hand-written converter, `PDtoMSstatsFormat()`,
+reads `Precursor Area` unless told otherwise.
 
 ```{r converter-default}
 formals(MSstatsConvert::PDtoMSstatsFormat)$which.quantification
@@ -92,39 +93,41 @@ The converter can also read `Intensity`, so the gold standard of the benchmark
 accepts it, and the benchmark counted this choice as correct.
 
 ```{r gold-standard}
-GROUND_TRUTH$proteome_discoverer$Intensity
+GOLD_STANDARD$proteome_discoverer$Intensity
 ```
 
 # Changing the conversion specification
 
 The conversion specification lists the fields in a data frame, so you can
 change the intensity column before converting. Check that the new column
-exists in the export.
+exists in the tool output.
 
 ```{r fix}
 fixed <- specification
 fixed$mappings$from[fixed$mappings$field == "Intensity"] <- "Precursor.Area"
 as.data.frame(fixed$mappings)[fixed$mappings$field == "Intensity",
                               c("field", "from")]
-"Precursor.Area" %in% names(export)
+"Precursor.Area" %in% names(tool_output)
 ```
 
 # Differential abundance results
 
-We converted the full export with the hand-written converter, which reads
-`Precursor Area`, and with the LLM-based converter and the model's conversion
-specification, which reads `Intensity`. We then analyzed both with MSstats, as
-below. The script `compare_pxd005642.R` in the GitHub repository of the
-package runs these steps.
+We converted the full tool output with the hand-written converter, which
+reads `Precursor Area`, and with the LLM-based converter and the model's
+conversion specification, which reads `Intensity`. We then analyzed both with
+MSstats, as below. The script `compare_pxd005642.R` in the GitHub repository
+of the package runs these steps.
 
 ```{r analysis-live, eval = FALSE}
-export <- fread("ControlMixture_DDA_ProteomeDiscoverer_input.csv")
+tool_output <- fread("ControlMixture_DDA_ProteomeDiscoverer_input.csv")
 annotation <- fread("annotation.csv")
 
 converted <- list(
-  hand = MSstatsConvert::PDtoMSstatsFormat(export, annotation = annotation),
-  llm  = LLMtoMSstatsFormat(normalize_headers(export), annotation = annotation,
-                            llm_mapping = specification))
+  hand = MSstatsConvert::PDtoMSstatsFormat(tool_output,
+                                           annotation = annotation),
+  llm  = LLMtoMSstatsFormat(normalize_headers(tool_output),
+                            annotation = annotation,
+                            specification = specification))
 processed <- lapply(converted, MSstats::dataProcess,
                     normalization = "equalizeMedians",
                     featureSubset = "topN", n_top_feature = 3)
@@ -166,32 +169,38 @@ Over the `r nrow(counts)` comparisons, the hand-written converter, with
 of them spiked. The choice of the column decides how much of the true change
 the analysis finds.
 
-A call changed when one converter called the protein significant and the
-other did not. We count it as near the threshold when the converter that did
-not call the protein significant still gave it an adjusted p-value of `NEAR`
-or less.
+The table below counts, for each comparison, the proteins that both
+converters call significant and those that only one of them calls
+significant.
 
-```{r changed}
-NEAR <- 0.2
-changed <- results[in_h & in_l][xor(sig_h %in% TRUE, sig_l %in% TRUE)]
-near <- changed[pmax(adjp_h, adjp_l, na.rm = TRUE) <= NEAR]
-c(changed = nrow(changed), near_threshold = nrow(near))
+```{r overlap}
+overlap <- results[, {
+  h <- sig_h %in% TRUE
+  l <- sig_l %in% TRUE
+  .(both = sum(h & l), area_only = sum(h & !l), intensity_only = sum(!h & l))
+}, by = .(comparison = Label)]
+overlap
 ```
 
-Only `r nrow(near)` of the `r nrow(changed)` changed calls were near the
-threshold, so the choice of the column does not just move borderline proteins
-across it.
+Over the `r nrow(overlap)` comparisons, the two converters share
+`r sum(overlap$both)` significant calls, while `r sum(overlap$area_only)` are
+significant only with `Precursor Area` and `r sum(overlap$intensity_only)`
+only with `Intensity`.
 
 # What to check
 
 - Which column the conversion specification reads as `Intensity`. In a
-  Proteome Discoverer export, prefer the integrated peak area,
-  `Precursor Area`, to the single precursor signal `Intensity`.
-- When the export has more than one intensity column, compare them on the
-  example rows. Columns whose ratio changes from row to row measure different
-  things, and choosing between them changes the results.
+  Proteome Discoverer tool output, prefer `Precursor Area`, the area of the
+  precursor's elution peak, to `Intensity`, its signal at the moment its
+  MS/MS spectrum was taken.
+- When the tool output has more than one intensity column, compare them on
+  the example rows. Columns whose ratio changes from row to row measure
+  different things, and choosing between them changes the results.
 - When MSstatsConvert has a converter for the tool, compare the conversion
-  specification with the columns that the converter reads by default.
+  specification with the columns that the converter reads by default. The
+  converter's help page lists them as the defaults of its arguments, for
+  example `which.quantification`, `which.proteinid` and `which.sequence` in
+  `?PDtoMSstatsFormat`.
 
 # Session information
 

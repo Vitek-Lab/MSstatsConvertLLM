@@ -1,5 +1,5 @@
 # ============================================================
-# config.R — Models, schemas, ground truth, and helper functions
+# config.R — Models, schemas, gold standard, and helper functions
 # ============================================================
 
 # ------------------------------------------------------------------
@@ -65,12 +65,12 @@ MSSTATS_FIELDS <- c(
 )
 
 # ------------------------------------------------------------------
-# 3. Ground truth mappings (from MSstatsConvert converter logic)
+# 3. Gold standard (from MSstatsConvert converter logic)
 #    Each entry: MSstats field -> expected source column name
 #    NULL = field not present / must be inferred or NA
 # ------------------------------------------------------------------
 
-#' Ground-truth column mappings per tool
+#' Gold standard source columns per tool
 #'
 #' A named list keyed by tool. Each value is a list mapping every MSstats field
 #' to the expected source column name(s): a single string, a character vector
@@ -79,7 +79,7 @@ MSSTATS_FIELDS <- c(
 #' [score_trial()].
 #'
 #' @export
-GROUND_TRUTH <- list(
+GOLD_STANDARD <- list(
   spectronaut = list(
     ProteinName     = c("PG.ProteinGroups", "PG.ProteinAccessions"),
     PeptideSequence = "EG.ModifiedSequence",
@@ -249,7 +249,7 @@ load_test_dataset <- function(tool_name, source = c("fixture", "benchmark")) {
 
 #' Canonical column-name normalizer
 #'
-#' Used for both raw data-frame headers and [GROUND_TRUTH] values so the LLM,
+#' Used for both raw data-frame headers and [GOLD_STANDARD] values so the LLM,
 #' the data, and the expected answers all speak the same dialect.
 #'
 #' @param x Character vector of column names.
@@ -271,9 +271,9 @@ normalize_headers <- function(df) {
   df
 }
 
-# Run GROUND_TRUTH values through the same normalizer so expected names
+# Run GOLD_STANDARD values through the same normalizer so expected names
 # match the headers the LLM will see.
-GROUND_TRUTH <- lapply(GROUND_TRUTH, function(tool_truth) {
+GOLD_STANDARD <- lapply(GOLD_STANDARD, function(tool_truth) {
   lapply(tool_truth, function(v) if (is.null(v)) NULL else normalize_colname(v))
 })
 

@@ -8,7 +8,7 @@ conversion specification}
 LLMtoMSstatsFormat(
   input,
   annotation = NULL,
-  llm_mapping,
+  specification,
   useUniquePeptide = TRUE,
   removeFewMeasurements = TRUE,
   removeProtein_with1Peptide = FALSE,
@@ -27,7 +27,8 @@ LLMtoMSstatsFormat(
 \item{annotation}{data.table with Run, Condition, BioReplicate columns, or
 NULL to extract them from \code{input}}
 
-\item{llm_mapping}{list — parsed LLM output with $mappings and optionally $filters}
+\item{specification}{list — the conversion specification, with $mappings and
+optionally $filters}
 
 \item{useUniquePeptide}{logical, remove shared peptides (default TRUE)}
 

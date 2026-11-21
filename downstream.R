@@ -347,7 +347,7 @@ run_downstream <- function(cfg) {
                            as.data.table(cfg$hand_convert(copy(raw), copy(annotation))))
   llm_out <- cached("llm_converted", llm_cache, {
     out <- LLMtoMSstatsFormat(input = normalize_headers(copy(raw)), annotation = copy(annotation),
-                              llm_mapping = cfg$mapping, use_log_file = FALSE)
+                              specification = cfg$mapping, use_log_file = FALSE)
     list(data = as.data.table(out), diagnostics = attr(out, "diagnostics"))
   })
   llm_converted <- llm_out$data

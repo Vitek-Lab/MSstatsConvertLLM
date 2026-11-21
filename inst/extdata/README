@@ -73,30 +73,31 @@ Study: LLM converter without filter-aware prompt leads to different results"
 different column for peptide sequence, leading to marginally different
 results" (MetaMorpheus, Solivais2024). Each file is a list with
 
-  rows           Rows of the export, with the column names the tool wrote.
-                 The first three are the rows the model was shown. For
-                 Spectronaut, the rows are the fragments of the first
-                 precursor.
-  forms          MetaMorpheus only: the first peptide that the export reports
-                 both with and without a modification, in one run, at one
-                 charge and in one protein group.
-  specification  The conversion specification of the saved benchmark trial
-                 that the downstream comparison used, repeat 1 of
-                 llama3.1-8b with the constrained_v3 prompt (Proteome
-                 Discoverer, Spectronaut) or the lean prompt (MetaMorpheus).
-  results        The differential analysis results of the case: one row
-                 per protein and comparison, the hand-written converter in
-                 the _h columns and the LLM-based converter in the _l
-                 columns.
+  tool_output        Rows of the tool output, with the column names the tool
+                     wrote. The first three are the rows the model was shown.
+                     For Spectronaut, the rows are the fragments of the first
+                     precursor.
+  peptide_sequences  MetaMorpheus only: the first peptide that the tool output
+                     reports both with and without a modification, in one
+                     run, at one charge and in one protein group.
+  specification      The conversion specification of the saved benchmark
+                     trial that the downstream comparison used, repeat 1 of
+                     llama3.1-8b with the constrained_v3 prompt (Proteome
+                     Discoverer, Spectronaut) or the lean prompt
+                     (MetaMorpheus).
+  results            The differential analysis results of the case: one row
+                     per protein and comparison, the hand-written converter
+                     in the _h columns and the LLM-based converter in the _l
+                     columns.
 
-The rows come from the deposited datasets of the manuscript, truncated to
-their first rows, in benchmark_data/ of the GitHub repository. The
-specifications and the results are cut from the saved trials and
+The tool output comes from the deposited datasets of the manuscript,
+truncated to their first rows, in benchmark_data/ of the GitHub repository.
+The specifications and the results are cut from the saved trials and
 downstream_panels.rds below, so nothing is recomputed.
 
   Rebuild with: Rscript inst/scripts/make_case_study_data.R
 
-Source of the Proteome Discoverer rows
+Source of the Proteome Discoverer tool output
   The 15 runs of PXD005642, which the CRG/UPF Proteomics Unit in Barcelona
   deposited in PRIDE as "MSstats splitplot method for protein quantitation
   in MS datasets". Thirty commercial proteins, in three subsets of ten, are
@@ -106,13 +107,13 @@ Source of the Proteome Discoverer rows
   publication for the dataset and no license beyond the EMBL-EBI terms of use.
   https://www.ebi.ac.uk/pride/archive/projects/PXD005642
 
-Source of the Spectronaut rows
+Source of the Spectronaut tool output
   A Spectronaut report of the 18 timsTOF Pro diaPASEF runs of conditions A
   and B in PXD028735, the benchmark of Van Puyvelde et al. (2022) cited above
   for the AlphaPept file. The deposit holds the raw files but no Spectronaut
   report. PRIDE lists the deposit under CC0.
 
-Source of the MetaMorpheus rows
+Source of the MetaMorpheus tool output
   The 20 runs of PXD003881, the spike-in benchmark of
 
     Shen, X. et al. IonStar enables high-precision, low-missing-data
@@ -121,8 +122,8 @@ Source of the MetaMorpheus rows
     https://doi.org/10.1073/pnas.1800541115
 
   in which E. coli lysate is spiked into human lysate at five levels, with
-  four runs at each level. The export comes from the reprocessing of these
-  runs with MetaMorpheus and FlashLFQ by
+  four runs at each level. The tool output comes from the reprocessing of
+  these runs with MetaMorpheus and FlashLFQ by
 
     Solivais, A. J. et al. Improved detection of differentially abundant
     proteins through FDR-control of peptide-identity-propagation. Journal of

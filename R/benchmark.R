@@ -77,7 +77,7 @@ create_chat <- function(model_key) {
 #' @return The parsed conversion specification: a list with `mappings`,
 #'   `confidence`, `notes` and `warnings`, plus `filters` for a filter-aware
 #'   prompt. This is the object [run_benchmark_trial()] returns as its `mapping`
-#'   element and the one [LLMtoMSstatsFormat()] takes as `llm_mapping`. How long
+#'   element and the one [LLMtoMSstatsFormat()] takes as `specification`. How long
 #'   the model took is attached as the `elapsed_sec` attribute.
 #' @details Requires the optional `ellmer` package and a running model backend
 #'   (e.g. Ollama).
@@ -158,7 +158,7 @@ infer_specification <- function(data,
 #' (e.g. Ollama).
 #'
 #' @param model_key Key into [MODEL_REGISTRY] (e.g. `"llama3.1-8b"`).
-#' @param tool_name Key into [GROUND_TRUTH] / [load_test_dataset()].
+#' @param tool_name Key into [GOLD_STANDARD] / [load_test_dataset()].
 #' @param prompt_key One of `names(PROMPT_VERSIONS)` (e.g. `"lean"`,
 #'   `"constrained"`, `"constrained_filter"`).
 #' @param acquisition `"DIA"`, `"DDA"`, or `NULL` to let the model guess.
@@ -167,8 +167,8 @@ infer_specification <- function(data,
 #' @param source `"fixture"` or `"benchmark"`, passed to [load_test_dataset()].
 #' @param use_structured Use `chat_structured()` (`TRUE`) or raw `chat()`
 #'   (`FALSE`).
-#' @return A list with `model`, `tool`, `prompt`, `mapping` (parsed),
-#'   `validation`, `elapsed_sec`, and `timestamp`.
+#' @return A list with `model`, `tool`, `prompt`, `mapping` (the parsed
+#'   conversion specification), `validation`, `elapsed_sec`, and `timestamp`.
 #' @export
 run_benchmark_trial <- function(model_key,
                                 tool_name,
@@ -192,12 +192,15 @@ run_benchmark_trial <- function(model_key,
   attr(result, "elapsed_sec") <- NULL
 
   # Post-hoc validation
-  validation <- validate_mapping(result)
+  validation <- validate_specification(result)
   
   list(
     model       = model_key,
     tool        = tool_name,
     prompt      = prompt_key,
+    # The specification is stored as `mapping`, the name used by the 288 saved
+    # trials in inst/extdata, so that score_trial() and downstream.R still read
+    # them.
     mapping     = result,
     validation  = validation,
     elapsed_sec = round(elapsed, 2),
@@ -206,7 +209,7 @@ run_benchmark_trial <- function(model_key,
 }
 
 # ------------------------------------------------------------------
-# Post-hoc validation of LLM mapping output
+# Post-hoc validation of a conversion specification
 # ------------------------------------------------------------------
 
 #' Post-hoc validation of an LLM conversion specification
@@ -214,13 +217,13 @@ run_benchmark_trial <- function(model_key,
 #' Catches issues the LLM gets wrong regardless of prompt: duplicate column
 #' assignments, missing required fields, and out-of-range confidences.
 #'
-#' @param mapping_result A parsed conversion specification (with a
+#' @param specification A parsed conversion specification (with a
 #'   `$mappings` element).
 #' @return A list with `passed` (logical) and `issues` (character vector).
 #' @export
-validate_mapping <- function(mapping_result) {
+validate_specification <- function(specification) {
   issues <- character(0)
-  mappings <- mapping_result$mappings
+  mappings <- specification$mappings
   
   # Normalize to list-of-lists
   if (is.data.frame(mappings)) {
@@ -259,7 +262,7 @@ validate_mapping <- function(mapping_result) {
   }
   
   # --- Check 3: No invented columns ---
-  # (requires column names from the input data — store in mapping_result 
+  # (requires column names from the input data — store in specification 
   #  if you want this check. Skipped for now.)
   
   # --- Check 4: Confidence in valid range ---
@@ -280,10 +283,10 @@ validate_mapping <- function(mapping_result) {
 }
 
 # ------------------------------------------------------------------
-# Score a single trial against ground truth
+# Score a single trial against the gold standard
 # ------------------------------------------------------------------
 
-#' Score a trial against ground truth
+#' Score a trial against the gold standard
 #'
 #' @param trial_result A list returned by [run_benchmark_trial()].
 #' @return A `data.table` with one row per MSstats field: `field`, `predicted`,
@@ -292,10 +295,10 @@ validate_mapping <- function(mapping_result) {
 #' @export
 score_trial <- function(trial_result) {
   tool <- trial_result$tool
-  truth <- GROUND_TRUTH[[tool]]
+  truth <- GOLD_STANDARD[[tool]]
   
   if (is.null(truth)) {
-    stop("No ground truth for tool: ", tool)
+    stop("No gold standard for tool: ", tool)
   }
   
   mappings_raw <- trial_result$mapping$mappings
@@ -328,7 +331,7 @@ score_trial <- function(trial_result) {
     } else {
       raw_from
     }
-    # Ground truth may be NULL, a single string, or a character vector
+    # The gold standard may be NULL, a single string, or a character vector
     # (first element = primary, rest = acceptable alternates)
     accepted   <- truth[[field]]
     accepted   <- if (is.null(accepted)) character(0) else accepted
@@ -346,7 +349,7 @@ score_trial <- function(trial_result) {
       norm(predicted) == norm(expected)
     }
 
-    # Acceptable = matches any element of the ground-truth vector
+    # Acceptable = matches any element of the gold-standard vector
     acceptable <- if (is.na(predicted) && length(accepted) == 0) {
       TRUE
     } else if (is.na(predicted) || length(accepted) == 0) {

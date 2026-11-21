@@ -5,7 +5,7 @@
 #' specification into the MSstatsConvert pipeline via [LLMtoMSstatsFormat()].
 #' Also provides a benchmarking harness ([run_benchmark_trial()],
 #' [score_trial()], [print_scorecard()]) for evaluating model / prompt
-#' combinations against curated ground truth.
+#' combinations against a curated gold standard.
 #'
 #' @keywords internal
 #' @import data.table
