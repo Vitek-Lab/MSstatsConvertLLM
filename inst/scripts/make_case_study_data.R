@@ -62,7 +62,7 @@ pd_case <- list(
   tool_output   = pd[1:3],
   specification = saved_specification("proteome_discoverer", "llama3.1-8b",
                                       "constrained_v3"),
-  results       = panel_results("(d) Intensity instead of peak area"))
+  results       = panel_results("(d) Intensity"))
 stopifnot(chosen(pd_case$specification, "Intensity") == "Intensity",
           all(c("Intensity", "Precursor Area") %in% names(pd_case$tool_output)))
 
@@ -79,7 +79,7 @@ sn_case <- list(
   tool_output   = sn_output,
   specification = saved_specification("spectronaut", "llama3.1-8b",
                                       "constrained_v3"),
-  results       = panel_results("(e) No filtering or censoring"))
+  results       = panel_results("(e) No filtering"))
 stopifnot(NROW(sn_case$specification$filters) == 0)
 
 # MetaMorpheus: the three rows the model was shown, where the base and the
@@ -95,7 +95,7 @@ mm_case <- list(
   peptide_sequences = mm[peptide, on = PEPTIDE_KEY],
   specification     = saved_specification("metamorpheus", "llama3.1-8b",
                                           "lean"),
-  results           = panel_results("(b) Unmodified peptide sequence"))
+  results           = panel_results("(b) Unmodified"))
 mm_case$peptide_sequences[, n := NULL]
 stopifnot(with(mm_case$tool_output, all(`Base Sequence` == `Full Sequence`)),
           uniqueN(mm_case$peptide_sequences$`Full Sequence`) > 1,

@@ -103,16 +103,17 @@ if (nrow(differences) == 0) "every cell matches the paper" else differences
 The manuscript compares the differential abundance results of the hand-written
 converter and the LLM-based converter for six choices that the models made in
 the conversion specification. The saved table holds, for each choice, one row
-per protein and comparison, with the adjusted p-value from each converter. The
-counts below are the significant proteins, the spiked proteins among them, the
-proteins whose significance changed, and how many of those were near the
-threshold, i.e., had an adjusted p-value of 0.2 or less with the converter that
-did not call them. They are the counts reported in the manuscript. The
-vignettes "2. Case Study: LLM converter assigns different columns for
-intensity", "3. Case Study: LLM converter without filter-aware prompt leads to
-different results" and "4. Case Study: LLM converter selects a different
-column for peptide sequence, leading to marginally different results" walk
-through three of the six choices.
+per protein and comparison that either converter reports, with the adjusted
+p-value from each converter and whether the protein was spiked, which is
+missing for a protein of mixed or unknown species. The counts below are the
+significant proteins, the spiked proteins among them, the proteins whose
+significance changed, and how many of those were near the threshold, i.e., the
+converter that did not call them gave an adjusted p-value of 0.2 or less. They
+are the counts reported in the manuscript. The vignettes "2. Case Study: LLM
+converter assigns different columns for intensity", "3. Case Study: LLM
+converter without filter-aware prompt leads to different results" and "4. Case
+Study: LLM converter selects a different column for peptide sequence, leading
+to marginally different results" walk through three of the six choices.
 
 ```r
 panels <- readRDS("inst/extdata/downstream_panels.rds")
@@ -121,14 +122,14 @@ CAP   <- 20     # display cap on -log10 adjusted p
 NEAR  <- 0.20   # a disagreement is near the threshold below this adjusted p
 
 counts <- panels[, {
-  shared  <- .SD[in_h & in_l]
-  changed <- shared[xor(sig_h %in% TRUE, sig_l %in% TRUE)]
+  changed <- .SD[xor(sig_h %in% TRUE, sig_l %in% TRUE)]
   .(hand        = sum(sig_h, na.rm = TRUE),
     hand_spiked = sum(sig_h & spiked, na.rm = TRUE),
     llm         = sum(sig_l, na.rm = TRUE),
     llm_spiked  = sum(sig_l & spiked, na.rm = TRUE),
     changed     = nrow(changed),
-    near        = nrow(changed[pmax(adjp_h, adjp_l, na.rm = TRUE) <= NEAR]))
+    near        = nrow(changed[!is.na(adjp_h) & !is.na(adjp_l) &
+                                 pmax(adjp_h, adjp_l) <= NEAR]))
 }, by = .(panel, data)]
 
 counts
@@ -136,7 +137,8 @@ counts
 
 The figure redraws the six panels. Each point is one protein in one comparison,
 and points on the dashed line have the same adjusted p-value with both
-converters.
+converters. A protein of mixed or unknown species would be drawn in a third
+colour; the six panels have none.
 
 ```r
 library(ggplot2)
@@ -148,7 +150,9 @@ points <- merge(panels[in_h & in_l & !is.na(adjp_h) & !is.na(adjp_l)],
                 strips, by = c("panel", "data"))
 points[, `:=`(x     = pmin(-log10(pmax(adjp_h, 1e-300)), CAP),
               y     = pmin(-log10(pmax(adjp_l, 1e-300)), CAP),
-              truth = fifelse(spiked, "changes (spiked)", "does not change"),
+              truth = fcase(spiked, "changes (spiked)",
+                            !spiked, "does not change",
+                            default = "mixed or unknown species"),
               strip = factor(strip, levels = strips$strip))]
 
 ggplot(points, aes(x, y, colour = truth)) +
@@ -157,8 +161,10 @@ ggplot(points, aes(x, y, colour = truth)) +
   geom_vline(xintercept = -log10(ALPHA), linetype = "dotted", colour = "grey65") +
   geom_point(alpha = 0.35, size = 0.6) +
   facet_wrap(~ strip, ncol = 3, scales = "free") +
-  scale_colour_manual(values = c("changes (spiked)" = "#B03A2E",
-                                 "does not change"  = "#8C9AA3"), name = NULL) +
+  scale_colour_manual(values = c("changes (spiked)"         = "#B03A2E",
+                                 "does not change"          = "#8C9AA3",
+                                 "mixed or unknown species" = "#C9A227"),
+                      name = NULL) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2))) +
   labs(x = "-log10 adjusted p-value, hand-written converter",
        y = "-log10 adjusted p-value, LLM-based converter") +
@@ -210,15 +216,21 @@ for (model in names(MODEL_REGISTRY)) {
 }
 ```
 
-`run_all.R` runs this loop and saves every trial. The differential abundance
-results come from six runs of the three comparison scripts, and
-`inst/scripts/make_benchmark_data.R` reduces their output to the tables used
-above. `inst/scripts/make_case_study_data.R` then cuts the files that the
+`run_all.R` runs this loop and saves the trials in
+`results/raw_trials_benchmark_<date>_<time>.rds`. The differential abundance
+results come from six runs of the three comparison scripts, which take the
+conversion specifications from the trials named in `TRIALS_RDS`, and
+`inst/scripts/make_benchmark_data.R` copies these trials to `inst/extdata`,
+where the code above reads them, and reduces the output of the comparisons to
+the tables used above. Without `TRIALS_RDS`, the scripts use the trials of the
+manuscript; the `export` line below selects the trials that `run_all.R` has
+just saved. `inst/scripts/make_case_study_data.R` then cuts the files that the
 case-study vignettes read from these tables. The commands are run from the
 root of the repository.
 
 ```sh
 Rscript run_all.R --source benchmark
+export TRIALS_RDS=$(ls -t results/raw_trials_benchmark_*.rds | head -n 1)
 
 LLM_MODEL=reference REF_SWAP=ProteinName=PG.ProteinNames Rscript compare_puyvelde2022.R
 LLM_MODEL=reference REF_SWAP=Intensity=F.NormalizedPeakArea Rscript compare_puyvelde2022.R

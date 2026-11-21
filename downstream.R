@@ -10,6 +10,8 @@
 # Environment variables:
 #   LLM_MODEL, LLM_PROMPT  the saved mapping to test. LLM_MODEL=reference uses
 #                          the converter's own default columns instead
+#   TRIALS_RDS             the saved trials the mapping is read from; by
+#                          default the trials of the manuscript in inst/extdata
 #   FORCE=1                recompute cached steps, needed after converter edits
 #   N_CORES                cores for dataProcess and groupComparison
 # ============================================================
@@ -36,7 +38,7 @@ if (!"filter_with_Qvalue" %in% names(formals(LLMtoMSstatsFormat))) {
 say <- function(template, ...) cat(format(Sys.time(), "[%H:%M:%S] "), sprintf(template, ...), "\n", sep = "")
 fmt <- function(n) format(n, big.mark = ",", scientific = FALSE)
 
-TRIALS_RDS <- "results/raw_trials_benchmark_20261007_163702.rds"
+TRIALS_RDS <- Sys.getenv("TRIALS_RDS", "inst/extdata/raw_trials_benchmark_20261007_163702.rds")
 FORCE      <- nzchar(Sys.getenv("FORCE"))
 n_detected <- parallel::detectCores()
 if (is.na(n_detected)) n_detected <- 2L
@@ -48,15 +50,24 @@ COL_POS   <- "#2C8A5F"
 COL_NEG   <- "grey65"
 COL_OTHER <- "#C9A227"
 
-cached <- function(name, dir, expr) {
-  path <- file.path(dir, paste0(name, ".rds"))
-  if (!FORCE && file.exists(path)) {
+# A step is read from the cache only if it was computed with the same
+# settings, which include those of the steps it was computed from: the call to
+# the hand-written converter or the mapping, then the dataProcess arguments,
+# then the contrast. A cache saved without its settings is recomputed.
+cached <- function(name, dir, settings, expr) {
+  path     <- file.path(dir, paste0(name, ".rds"))
+  set_path <- file.path(dir, paste0(name, "_settings.rds"))
+  # all.equal() rather than identical(), which never matches a data.table
+  # read back from disk
+  if (!FORCE && file.exists(path) && file.exists(set_path) &&
+      isTRUE(all.equal(readRDS(set_path), settings))) {
     say("  %s: from cache", name)
     return(readRDS(path))
   }
   t0 <- Sys.time()
   value <- expr
   saveRDS(value, path)
+  saveRDS(settings, set_path)
   say("  %s: %.1f min", name, as.numeric(difftime(Sys.time(), t0, units = "mins")))
   value
 }
@@ -343,9 +354,12 @@ run_downstream <- function(cfg) {
 
   # 3. Convert with both paths -------------------------------------------
   say("3. Converting")
-  hand_converted <- cached("hand_converted", hand_cache,
+  # The settings each cached step is computed with; every later step adds its own
+  hand_settings <- list(convert = deparse(cfg$hand_convert))
+  llm_settings  <- list(mapping = cfg$mapping)
+  hand_converted <- cached("hand_converted", hand_cache, hand_settings,
                            as.data.table(cfg$hand_convert(copy(raw), copy(annotation))))
-  llm_out <- cached("llm_converted", llm_cache, {
+  llm_out <- cached("llm_converted", llm_cache, llm_settings, {
     out <- LLMtoMSstatsFormat(input = normalize_headers(copy(raw)), annotation = copy(annotation),
                               specification = cfg$mapping, use_log_file = FALSE)
     list(data = as.data.table(out), diagnostics = attr(out, "diagnostics"))
@@ -394,8 +408,10 @@ run_downstream <- function(cfg) {
                              list(use_log_file = FALSE, numberOfCores = N_CORES)),
             envir = environment())
   }
-  hand_processed <- cached("hand_processed", hand_cache, run_dp(hand_converted))
-  llm_processed  <- cached("llm_processed",  llm_cache,  run_dp(llm_converted))
+  hand_settings$dp_args <- cfg$dp_args
+  llm_settings$dp_args  <- cfg$dp_args
+  hand_processed <- cached("hand_processed", hand_cache, hand_settings, run_dp(hand_converted))
+  llm_processed  <- cached("llm_processed",  llm_cache,  llm_settings,  run_dp(llm_converted))
 
   # 5. groupComparison ---------------------------------------------------
   levs <- levels_of(hand_processed)
@@ -406,8 +422,10 @@ run_downstream <- function(cfg) {
     groupComparison(contrast.matrix = contrast, data = p, use_log_file = FALSE,
                     numberOfCores = N_CORES)
   }
-  hand_cmp <- cached("hand_comparison", hand_cache, run_gc(hand_processed))
-  llm_cmp  <- cached("llm_comparison",  llm_cache,  run_gc(llm_processed))
+  hand_settings$contrast <- contrast
+  llm_settings$contrast  <- contrast
+  hand_cmp <- cached("hand_comparison", hand_cache, hand_settings, run_gc(hand_processed))
+  llm_cmp  <- cached("llm_comparison",  llm_cache,  llm_settings,  run_gc(llm_processed))
 
   # 6. Compare the results -----------------------------------------------
   say("6. Comparing")

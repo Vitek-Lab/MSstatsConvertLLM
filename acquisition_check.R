@@ -16,7 +16,7 @@ TOOL  <- "proteome_discoverer"
 N     <- 10
 
 ollama_unload <- function(model_key) {
-  request(paste0(OLLAMA_URL, "/api/generate")) |>
+  request(paste0(MSstatsConvertLLM:::.ollama_url(), "/api/generate")) |>
     req_body_json(list(model = MODEL_REGISTRY[[model_key]]$model, keep_alive = 0)) |>
     req_perform()
   Sys.sleep(2)

@@ -21,7 +21,8 @@ OUTPUT <- "inst/extdata/alphapept_specification.rds"
 stopifnot(file.exists(INPUT))
 input <- fread(INPUT)
 
-cat(sprintf("Ollama at %s, model %s, prompt %s\n", OLLAMA_URL, MODEL, PROMPT))
+cat(sprintf("Ollama at %s, model %s, prompt %s\n",
+            MSstatsConvertLLM:::.ollama_url(), MODEL, PROMPT))
 
 # The first call after a change of prompt is the odd one out: the model has the
 # prompt to digest as well as the data, and tends to answer differently from
@@ -46,5 +47,9 @@ validation <- validate_specification(mapping)
 cat("\nvalidate_specification passed:", validation$passed, "\n")
 if (length(validation$issues)) cat(paste0("  ", validation$issues, collapse = "\n"), "\n")
 
+if (!isTRUE(validation$passed) || NROW(mapping$mappings) == 0) {
+  stop("The specification is empty or did not pass validation, so ", OUTPUT,
+       " was not overwritten.", call. = FALSE)
+}
 saveRDS(mapping, OUTPUT)
 cat("\nWritten:", OUTPUT, "\n")

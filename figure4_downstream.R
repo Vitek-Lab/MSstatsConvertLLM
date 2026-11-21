@@ -44,13 +44,20 @@ for (p in panels) {
   if (!file.exists(f)) stop("Missing ", f, ". This run's downstream comparison has not been saved.")
   r   <- readRDS(f)
   pos <- r$config$positive
+  neg <- r$config$negative
   h   <- as.data.table(r$hand)
   l   <- as.data.table(r$llm)
 
-  m <- merge(h[, .(Protein, Label, adjp_h = adj.pvalue, sig_h = sig, species)],
-             l[, .(Protein, Label, adjp_l = adj.pvalue, sig_l = sig)],
-             by = c("Protein", "Label"))
-  m[, truth := fifelse(species == pos, "changes (spiked)", "does not change")]
+  # Every protein and comparison that either path reports, so that a protein
+  # one path calls and the other does not report still counts as a disagreement
+  m <- merge(h[, .(Protein, Label, species, adjp_h = adj.pvalue, sig_h = sig)],
+             l[, .(Protein, Label, species, adjp_l = adj.pvalue, sig_l = sig)],
+             by = c("Protein", "Label", "species"), all = TRUE)
+  # A protein of mixed or unknown species ("OTHER") is neither spiked nor
+  # unchanged, so it is kept apart from both
+  m[, truth := fcase(species == pos, "changes (spiked)",
+                     species == neg, "does not change",
+                     default = "mixed or unknown species")]
   m[, x := pmin(-log10(pmax(adjp_h, 1e-300)), CAP)]
   m[, y := pmin(-log10(pmax(adjp_l, 1e-300)), CAP)]
   m[, panel := p$choice]
@@ -58,12 +65,14 @@ for (p in panels) {
 
   n_sig <- function(d) sum(d$sig, na.rm = TRUE)
   n_tp  <- function(d) sum(d$sig & d$species == pos, na.rm = TRUE)
+  n_fp  <- function(d) sum(d$sig & d$species == neg, na.rm = TRUE)
   disc  <- m[xor(sig_h %in% TRUE, sig_l %in% TRUE)]
-  near  <- disc[pmax(adjp_h, adjp_l, na.rm = TRUE) <= NEAR]
+  # Near the threshold only when both paths gave an adjusted p-value
+  near  <- disc[!is.na(adjp_h) & !is.na(adjp_l) & pmax(adjp_h, adjp_l) <= NEAR]
   counts[[p$run]] <- data.table(
     panel = p$choice, data = p$data, run = p$run,
-    conv_sig = n_sig(h), conv_true = n_tp(h), conv_false = n_sig(h) - n_tp(h),
-    llm_sig  = n_sig(l), llm_true  = n_tp(l), llm_false  = n_sig(l) - n_tp(l),
+    conv_sig = n_sig(h), conv_true = n_tp(h), conv_false = n_fp(h),
+    llm_sig  = n_sig(l), llm_true  = n_tp(l), llm_false  = n_fp(l),
     disagree = nrow(disc), disagree_near = nrow(near))
 }
 
@@ -85,7 +94,8 @@ g <- ggplot(d, aes(x, y, colour = truth)) +
   # vector. ragg, because ggrastr's default Cairo device needs XQuartz.
   ggrastr::rasterise(geom_point(alpha = 0.35, size = 0.6), dpi = 600, dev = "ragg") +
   facet_wrap(~ strip, ncol = 3, scales = "free") +
-  scale_colour_manual(values = c("changes (spiked)" = "#B03A2E", "does not change" = "#8C9AA3"),
+  scale_colour_manual(values = c("changes (spiked)" = "#B03A2E", "does not change" = "#8C9AA3",
+                                 "mixed or unknown species" = "#C9A227"),
                       name = NULL) +
   guides(colour = guide_legend(override.aes = list(alpha = 1, size = 2))) +
   labs(x = "-log10 adjusted p-value, hand-written converter",
