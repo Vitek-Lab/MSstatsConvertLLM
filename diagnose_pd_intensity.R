@@ -13,8 +13,8 @@ pos <- r$config$positive
 h   <- as.data.table(r$hand)   # Precursor Area, hand-written converter
 l   <- as.data.table(r$llm)    # Intensity, LLM path
 
-m <- merge(h[species == pos & is.finite(log2FC), .(Protein, Label, fc_area = log2FC, se_area = SE)],
-           l[species == pos & is.finite(log2FC), .(Protein, Label, fc_int  = log2FC, se_int  = SE)],
+m <- merge(h[species == pos & is.finite(log2FC), .(Protein, Label, fc_area = log2FC, se_area = SE, t_area = Tvalue)],
+           l[species == pos & is.finite(log2FC), .(Protein, Label, fc_int  = log2FC, se_int  = SE, t_int  = Tvalue)],
            by = c("Protein", "Label"))
 med <- function(v) median(v, na.rm = TRUE)
 
@@ -23,7 +23,7 @@ cat(sprintf("Protein-comparison pairs: %d\n", nrow(m)))
 cat(sprintf("Median |log2FC|: Precursor Area %.2f, Intensity %.2f\n", med(abs(m$fc_area)), med(abs(m$fc_int))))
 cat(sprintf("Median SE:       Precursor Area %.2f, Intensity %.2f\n", med(m$se_area), med(m$se_int)))
 cat(sprintf("Median |t|:      Precursor Area %.2f, Intensity %.2f\n",
-            med(abs(m$fc_area / m$se_area)), med(abs(m$fc_int / m$se_int))))
+            med(abs(m$t_area)), med(abs(m$t_int))))
 fit <- lm(fc_int ~ fc_area, data = m)
 cat(sprintf("Intensity log2FC regressed on Precursor Area log2FC: slope %.2f, r = %.2f\n",
             coef(fit)[2], cor(m$fc_area, m$fc_int)))
