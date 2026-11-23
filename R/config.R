@@ -1,5 +1,5 @@
 # ============================================================
-# config.R — Models, schemas, ground truth, and helper functions
+# config.R — Models, schemas, gold standard, and helper functions
 # ============================================================
 
 # ------------------------------------------------------------------
@@ -9,10 +9,10 @@
 #' Registry of benchmark models
 #'
 #' A named list of model specifications used by [create_chat()] and
-#' [run_trial()]. Each entry has `provider` (`"ollama"` or `"anthropic"`),
-#' `model` (the provider-specific model id), and a human-readable `label`.
-#' Edit this object in `R/config.R` (and reinstall / `devtools::load_all()`) to
-#' add models to the benchmark.
+#' [run_benchmark_trial()]. Each entry has `provider` (`"ollama"` or
+#' `"anthropic"`), `model` (the provider-specific model id), and a
+#' human-readable `label`. Edit this object in `R/config.R` (and reinstall /
+#' `devtools::load_all()`) to add models to the benchmark.
 #'
 #' @export
 MODEL_REGISTRY <- list(
@@ -65,12 +65,12 @@ MSSTATS_FIELDS <- c(
 )
 
 # ------------------------------------------------------------------
-# 3. Ground truth mappings (from MSstatsConvert converter logic)
+# 3. Gold standard (from MSstatsConvert converter logic)
 #    Each entry: MSstats field -> expected source column name
 #    NULL = field not present / must be inferred or NA
 # ------------------------------------------------------------------
 
-#' Ground-truth column mappings per tool
+#' Gold standard source columns per tool
 #'
 #' A named list keyed by tool. Each value is a list mapping every MSstats field
 #' to the expected source column name(s): a single string, a character vector
@@ -79,7 +79,7 @@ MSSTATS_FIELDS <- c(
 #' [score_trial()].
 #'
 #' @export
-GROUND_TRUTH <- list(
+GOLD_STANDARD <- list(
   spectronaut = list(
     ProteinName     = c("PG.ProteinGroups", "PG.ProteinAccessions"),
     PeptideSequence = "EG.ModifiedSequence",
@@ -171,6 +171,13 @@ TOOL_TRANSFORMS <- list(
 #' @export
 BENCHMARK_DATA_DIR <- Sys.getenv("MSSTATS_BENCHMARK_DATA", "benchmark_data")
 
+# The directory the loader actually reads. It is looked up on each call, so
+# MSSTATS_BENCHMARK_DATA can change without reinstalling the package.
+# BENCHMARK_DATA_DIR above is fixed when the package is installed, which
+# silently pinned the directory after a reinstall; it stays only for scripts
+# that read it.
+.benchmark_data_dir <- function() Sys.getenv("MSSTATS_BENCHMARK_DATA", "benchmark_data")
+
 #' Load a registered benchmark test dataset
 #'
 #' Reads a proteomics tool's output and normalizes its column headers. Two
@@ -209,13 +216,13 @@ load_test_dataset <- function(tool_name, source = c("fixture", "benchmark")) {
     ),
     benchmark = list(
       spectronaut = file.path(
-        BENCHMARK_DATA_DIR, "Puyvelde2022_Spectronaut_Report-001.tsv"
+        .benchmark_data_dir(), "Puyvelde2022_Spectronaut_Report-001.tsv"
       ),
       proteome_discoverer = file.path(
-        BENCHMARK_DATA_DIR, "PXD005642_PD_input.csv"
+        .benchmark_data_dir(), "PXD005642_PD_input.csv"
       ),
       metamorpheus = file.path(
-        BENCHMARK_DATA_DIR, "Solivais2024_QuantifiedPeaks.tsv"
+        .benchmark_data_dir(), "Solivais2024_QuantifiedPeaks.tsv"
       )
     )
   )
@@ -242,7 +249,7 @@ load_test_dataset <- function(tool_name, source = c("fixture", "benchmark")) {
 
 #' Canonical column-name normalizer
 #'
-#' Used for both raw data-frame headers and [GROUND_TRUTH] values so the LLM,
+#' Used for both raw data-frame headers and [GOLD_STANDARD] values so the LLM,
 #' the data, and the expected answers all speak the same dialect.
 #'
 #' @param x Character vector of column names.
@@ -264,9 +271,9 @@ normalize_headers <- function(df) {
   df
 }
 
-# Run GROUND_TRUTH values through the same normalizer so expected names
+# Run GOLD_STANDARD values through the same normalizer so expected names
 # match the headers the LLM will see.
-GROUND_TRUTH <- lapply(GROUND_TRUTH, function(tool_truth) {
+GOLD_STANDARD <- lapply(GOLD_STANDARD, function(tool_truth) {
   lapply(tool_truth, function(v) if (is.null(v)) NULL else normalize_colname(v))
 })
 
@@ -298,7 +305,8 @@ make_json_preview <- function(df, n_rows = 3, max_chars = 50) {
 #
 # These are built lazily by the functions below so the package can be
 # installed and loaded without the (optional) 'ellmer' dependency. They are
-# only evaluated from within run_trial(), which checks for ellmer first.
+# only evaluated from within infer_specification(), which run_benchmark_trial()
+# calls and which checks for ellmer first.
 # ------------------------------------------------------------------
 
 #' @keywords internal

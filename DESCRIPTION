@@ -12,7 +12,7 @@ Description: Uses locally-hosted large language models (LLMs) to automatically
     pipeline via LLMtoMSstatsFormat(), reducing the manual overhead of onboarding
     new input formats. Also provides a benchmarking harness for evaluating how
     accurately different local models and prompt strategies recover the correct
-    schema mapping against curated ground truth.
+    schema mapping against a curated gold standard.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: false
@@ -26,8 +26,11 @@ Imports:
 Suggests:
     MSstats,
     ggplot2,
+    knitr,
+    rmarkdown,
     stringr,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 biocViews: Proteomics, MassSpectrometry, Preprocessing, Software
 RoxygenNote: 8.0.0
 Roxygen: list(markdown = TRUE)

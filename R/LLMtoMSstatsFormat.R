@@ -6,12 +6,14 @@
 # converters use.
 # ============================================================
 
-#' Convert arbitrary proteomics output to MSstats format using LLM mapping
+#' Convert arbitrary proteomics output to MSstats format using an LLM
+#' conversion specification
 #'
 #' @param input data.table of raw tool output
 #' @param annotation data.table with Run, Condition, BioReplicate columns, or
 #'   NULL to extract them from `input`
-#' @param llm_mapping list — parsed LLM output with $mappings and optionally $filters
+#' @param specification list — the conversion specification, with $mappings and
+#'   optionally $filters
 #' @param useUniquePeptide logical, remove shared peptides (default TRUE)
 #' @param removeFewMeasurements logical (default TRUE)
 #' @param removeProtein_with1Peptide logical (default FALSE)
@@ -29,7 +31,7 @@
 LLMtoMSstatsFormat <- function(
     input,
     annotation = NULL,
-    llm_mapping,
+    specification,
     useUniquePeptide = TRUE,
     removeFewMeasurements = TRUE,
     removeProtein_with1Peptide = FALSE,
@@ -68,7 +70,7 @@ LLMtoMSstatsFormat <- function(
   # ---------------------------------------------------------------
   # 1. Parse the LLM mapping into a column rename map
   # ---------------------------------------------------------------
-  mapping <- .parseLLMMapping(llm_mapping)
+  mapping <- .parseLLMMapping(specification)
   
   if (verbose) {
     message("== LLM Column Mapping ==")
@@ -87,7 +89,7 @@ LLMtoMSstatsFormat <- function(
   #    row keeps its place with a blank intensity, so MSstats treats it
   #    as censored rather than absent.
   # ---------------------------------------------------------------
-  filter_cfg <- .buildFilterConfigs(input, llm_mapping, verbose)
+  filter_cfg <- .buildFilterConfigs(input, specification, verbose)
   diagnostics$skipped_filters <- filter_cfg$skipped
   diagnostics$applied_filters <- filter_cfg$applied
   
@@ -294,7 +296,8 @@ LLMtoMSstatsFormat <- function(
 # Internal helpers
 # ==================================================================
 
-#' Parse LLM mapping JSON into a rename map and list of fill columns
+#' Parse an LLM conversion specification into a rename map and list of fill
+#' columns
 #' @param llm_mapping list with $mappings (array of field/from objects)
 #' @return list(rename_map = named list, fill_columns = character vector)
 #' @keywords internal

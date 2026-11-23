@@ -53,56 +53,59 @@ create_chat <- function(model_key) {
 }
 
 # ------------------------------------------------------------------
-# Run one benchmark trial
+# Infer a conversion specification for any table of tool output
 # ------------------------------------------------------------------
 
-#' Run one schema-inference trial
+#' Infer an MSstats conversion specification for a table of tool output
 #'
-#' Loads a tool's test dataset, builds the prompt, queries a local model, and
-#' returns the parsed mapping together with validation and timing metadata.
-#' Requires the optional `ellmer` package and a running model backend
-#' (e.g. Ollama).
+#' Builds the data preview, asks a model to map the columns onto the MSstats
+#' schema, and returns the parsed conversion specification. This is the step
+#' [run_benchmark_trial()] performs, without the benchmark bookkeeping: call it
+#' directly on the output of a tool that has no converter of its own, then pass
+#' the result to [LLMtoMSstatsFormat()].
 #'
+#' @param data A data frame of raw tool output. Only its column names and the
+#'   first `n_preview` rows are sent to the model.
 #' @param model_key Key into [MODEL_REGISTRY] (e.g. `"llama3.1-8b"`).
-#' @param tool_name Key into [GROUND_TRUTH] / [load_test_dataset()].
 #' @param prompt_key One of `names(PROMPT_VERSIONS)` (e.g. `"lean"`,
 #'   `"constrained"`, `"constrained_filter"`).
 #' @param acquisition `"DIA"`, `"DDA"`, or `NULL` to let the model guess.
-#' @param allow_transforms Enable packed-column transform detection.
 #' @param n_preview Number of rows to include in the data preview.
-#' @param source `"fixture"` or `"benchmark"`, passed to [load_test_dataset()].
+#' @param allow_transforms Enable packed-column transform detection.
 #' @param use_structured Use `chat_structured()` (`TRUE`) or raw `chat()`
 #'   (`FALSE`).
-#' @return A list with `model`, `tool`, `prompt`, `mapping` (parsed),
-#'   `validation`, `elapsed_sec`, and `timestamp`.
+#' @return The parsed conversion specification: a list with `mappings`,
+#'   `confidence`, `notes` and `warnings`, plus `filters` for a filter-aware
+#'   prompt. This is the object [run_benchmark_trial()] returns as its `mapping`
+#'   element and the one [LLMtoMSstatsFormat()] takes as `specification`. How long
+#'   the model took is attached as the `elapsed_sec` attribute.
+#' @details Requires the optional `ellmer` package and a running model backend
+#'   (e.g. Ollama).
 #' @export
-run_trial <- function(model_key,
-                      tool_name,
-                      prompt_key = "constrained",
-                      acquisition = NULL,
-                      allow_transforms = FALSE,
-                      n_preview  = 3,
-                      use_structured = TRUE,
-                      source = "fixture") {
-  
-  # Load data and build prompt
-  df <- load_test_dataset(tool_name, source = source)
-  preview <- make_json_preview(df, n_rows = n_preview)
+infer_specification <- function(data,
+                                model_key,
+                                prompt_key = "constrained",
+                                acquisition = NULL,
+                                n_preview = 3,
+                                allow_transforms = FALSE,
+                                use_structured = TRUE) {
+
+  preview <- make_json_preview(data, n_rows = n_preview)
   system_prompt <- PROMPT_VERSIONS[[prompt_key]]
   user_prompt   <- build_user_prompt(preview, acquisition = acquisition,
                                      allow_transforms = allow_transforms)
-  
+
   # Create fresh chat with system prompt
   chat <- create_chat(model_key)
   chat$set_system_prompt(system_prompt)
-  
+
   # Run inference with timing
   t0 <- Sys.time()
-  
+
   # Pick the right structured type based on prompt and transforms
   has_filters <- prompt_key %in% FILTER_PROMPTS
   result_type <- .select_mapping_type(has_filters, allow_transforms)
-  
+
   if (use_structured) {
     result <- tryCatch(
       chat$chat_structured(user_prompt, type = result_type, convert = TRUE),
@@ -112,7 +115,7 @@ run_trial <- function(model_key,
         NULL
       }
     )
-    
+
     # Fallback: raw chat + manual parse
     if (is.null(result)) {
       chat2 <- create_chat(model_key)
@@ -136,16 +139,68 @@ run_trial <- function(model_key,
       }
     )
   }
-  
+
   elapsed <- as.numeric(difftime(Sys.time(), t0, units = "secs"))
+  attr(result, "elapsed_sec") <- round(elapsed, 2)
+  result
+}
+
+# ------------------------------------------------------------------
+# Run one benchmark trial
+# ------------------------------------------------------------------
+
+#' Run one schema-inference trial
+#'
+#' Loads a tool's test dataset, builds the prompt, queries a local model, and
+#' returns the parsed conversion specification together with validation and
+#' timing metadata.
+#' Requires the optional `ellmer` package and a running model backend
+#' (e.g. Ollama).
+#'
+#' @param model_key Key into [MODEL_REGISTRY] (e.g. `"llama3.1-8b"`).
+#' @param tool_name Key into [GOLD_STANDARD] / [load_test_dataset()].
+#' @param prompt_key One of `names(PROMPT_VERSIONS)` (e.g. `"lean"`,
+#'   `"constrained"`, `"constrained_filter"`).
+#' @param acquisition `"DIA"`, `"DDA"`, or `NULL` to let the model guess.
+#' @param allow_transforms Enable packed-column transform detection.
+#' @param n_preview Number of rows to include in the data preview.
+#' @param source `"fixture"` or `"benchmark"`, passed to [load_test_dataset()].
+#' @param use_structured Use `chat_structured()` (`TRUE`) or raw `chat()`
+#'   (`FALSE`).
+#' @return A list with `model`, `tool`, `prompt`, `mapping` (the parsed
+#'   conversion specification), `validation`, `elapsed_sec`, and `timestamp`.
+#' @export
+run_benchmark_trial <- function(model_key,
+                                tool_name,
+                                prompt_key = "constrained",
+                                acquisition = NULL,
+                                allow_transforms = FALSE,
+                                n_preview  = 3,
+                                use_structured = TRUE,
+                                source = "fixture") {
   
+  # Load the data, then infer the conversion specification. The model call is
+  # timed inside infer_specification(), which attaches the time as an attribute;
+  # it is moved to elapsed_sec so that `mapping` holds the bare specification.
+  df <- load_test_dataset(tool_name, source = source)
+  result <- infer_specification(df, model_key, prompt_key,
+                                acquisition      = acquisition,
+                                n_preview        = n_preview,
+                                allow_transforms = allow_transforms,
+                                use_structured   = use_structured)
+  elapsed <- attr(result, "elapsed_sec")
+  attr(result, "elapsed_sec") <- NULL
+
   # Post-hoc validation
-  validation <- validate_mapping(result)
+  validation <- validate_specification(result)
   
   list(
     model       = model_key,
     tool        = tool_name,
     prompt      = prompt_key,
+    # The specification is stored as `mapping`, the name used by the 288 saved
+    # trials in inst/extdata, so that score_trial() and downstream.R still read
+    # them.
     mapping     = result,
     validation  = validation,
     elapsed_sec = round(elapsed, 2),
@@ -154,20 +209,21 @@ run_trial <- function(model_key,
 }
 
 # ------------------------------------------------------------------
-# Post-hoc validation of LLM mapping output
+# Post-hoc validation of a conversion specification
 # ------------------------------------------------------------------
 
-#' Post-hoc validation of an LLM mapping result
+#' Post-hoc validation of an LLM conversion specification
 #'
 #' Catches issues the LLM gets wrong regardless of prompt: duplicate column
 #' assignments, missing required fields, and out-of-range confidences.
 #'
-#' @param mapping_result A parsed mapping (with a `$mappings` element).
+#' @param specification A parsed conversion specification (with a
+#'   `$mappings` element).
 #' @return A list with `passed` (logical) and `issues` (character vector).
 #' @export
-validate_mapping <- function(mapping_result) {
+validate_specification <- function(specification) {
   issues <- character(0)
-  mappings <- mapping_result$mappings
+  mappings <- specification$mappings
   
   # Normalize to list-of-lists
   if (is.data.frame(mappings)) {
@@ -206,7 +262,7 @@ validate_mapping <- function(mapping_result) {
   }
   
   # --- Check 3: No invented columns ---
-  # (requires column names from the input data — store in mapping_result 
+  # (requires column names from the input data — store in specification 
   #  if you want this check. Skipped for now.)
   
   # --- Check 4: Confidence in valid range ---
@@ -227,22 +283,22 @@ validate_mapping <- function(mapping_result) {
 }
 
 # ------------------------------------------------------------------
-# Score a single trial against ground truth
+# Score a single trial against the gold standard
 # ------------------------------------------------------------------
 
-#' Score a trial against ground truth
+#' Score a trial against the gold standard
 #'
-#' @param trial_result A list returned by [run_trial()].
+#' @param trial_result A list returned by [run_benchmark_trial()].
 #' @return A `data.table` with one row per MSstats field: `field`, `predicted`,
 #'   `expected`, `n_acceptable`, `exact_match`, `acceptable_match`,
 #'   `candidate_hit`, `confidence`, `has_candidates`, `n_candidates`.
 #' @export
 score_trial <- function(trial_result) {
   tool <- trial_result$tool
-  truth <- GROUND_TRUTH[[tool]]
+  truth <- GOLD_STANDARD[[tool]]
   
   if (is.null(truth)) {
-    stop("No ground truth for tool: ", tool)
+    stop("No gold standard for tool: ", tool)
   }
   
   mappings_raw <- trial_result$mapping$mappings
@@ -275,7 +331,7 @@ score_trial <- function(trial_result) {
     } else {
       raw_from
     }
-    # Ground truth may be NULL, a single string, or a character vector
+    # The gold standard may be NULL, a single string, or a character vector
     # (first element = primary, rest = acceptable alternates)
     accepted   <- truth[[field]]
     accepted   <- if (is.null(accepted)) character(0) else accepted
@@ -293,7 +349,7 @@ score_trial <- function(trial_result) {
       norm(predicted) == norm(expected)
     }
 
-    # Acceptable = matches any element of the ground-truth vector
+    # Acceptable = matches any element of the gold-standard vector
     acceptable <- if (is.na(predicted) && length(accepted) == 0) {
       TRUE
     } else if (is.na(predicted) || length(accepted) == 0) {
@@ -343,7 +399,7 @@ score_trial <- function(trial_result) {
 #' Pretty-print a scored trial to the console
 #'
 #' @param scores A `data.table` returned by [score_trial()].
-#' @param trial_result The list returned by [run_trial()].
+#' @param trial_result The list returned by [run_benchmark_trial()].
 #' @return `scores`, invisibly.
 #' @export
 print_scorecard <- function(scores, trial_result) {

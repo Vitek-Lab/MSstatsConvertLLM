@@ -6,7 +6,7 @@
 # and empirical FDR using species-labeled benchmark data.
 # ============================================================
 
-library(MSstatsConvertLLM)     # run_trial(), score_trial(), LLMtoMSstatsFormat()
+library(MSstatsConvertLLM)     # run_benchmark_trial(), score_trial(), LLMtoMSstatsFormat()
 
 library(MSstats)
 library(ggplot2)
@@ -101,7 +101,7 @@ llm_converted <- tryCatch(
   LLMtoMSstatsFormat(
     input        = raw_data,
     annotation   = annotation,
-    llm_mapping  = llm_mapping,
+    specification = llm_mapping,
     verbose      = TRUE,
     use_log_file = FALSE
   ),

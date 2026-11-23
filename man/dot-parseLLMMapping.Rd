@@ -2,7 +2,8 @@
 % Please edit documentation in R/LLMtoMSstatsFormat.R
 \name{.parseLLMMapping}
 \alias{.parseLLMMapping}
-\title{Parse LLM mapping JSON into a rename map and list of fill columns}
+\title{Parse an LLM conversion specification into a rename map and list of fill
+columns}
 \usage{
 .parseLLMMapping(llm_mapping)
 }
@@ -13,6 +14,7 @@
 list(rename_map = named list, fill_columns = character vector)
 }
 \description{
-Parse LLM mapping JSON into a rename map and list of fill columns
+Parse an LLM conversion specification into a rename map and list of fill
+columns
 }
 \keyword{internal}

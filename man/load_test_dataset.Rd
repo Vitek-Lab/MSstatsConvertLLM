@@ -4,17 +4,21 @@
 \alias{load_test_dataset}
 \title{Load a registered benchmark test dataset}
 \usage{
-load_test_dataset(tool_name)
+load_test_dataset(tool_name, source = c("fixture", "benchmark"))
 }
 \arguments{
 \item{tool_name}{Character key, one of the tools registered in the function
 body (e.g. \code{"spectronaut"}, \code{"proteome_discoverer"}, \code{"metamorpheus"},
 \code{"diann"}).}
+
+\item{source}{\code{"fixture"} for the \code{MSstatsConvert} example files,
+\code{"benchmark"} for the deposited datasets in \link{BENCHMARK_DATA_DIR}.}
 }
 \value{
 A \code{data.table} of the raw tool output with normalized headers.
 }
 \description{
-Reads a proteomics tool's example output (bundled with \code{MSstatsConvert}) and
-normalizes its column headers.
+Reads a proteomics tool's output and normalizes its column headers. Two
+sources are available: the example files bundled with \code{MSstatsConvert},
+and the deposited datasets reported in the paper.
 }

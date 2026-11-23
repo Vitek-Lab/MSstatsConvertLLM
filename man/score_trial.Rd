@@ -2,12 +2,12 @@
 % Please edit documentation in R/benchmark.R
 \name{score_trial}
 \alias{score_trial}
-\title{Score a trial against ground truth}
+\title{Score a trial against the gold standard}
 \usage{
 score_trial(trial_result)
 }
 \arguments{
-\item{trial_result}{A list returned by \code{\link[=run_trial]{run_trial()}}.}
+\item{trial_result}{A list returned by \code{\link[=run_benchmark_trial]{run_benchmark_trial()}}.}
 }
 \value{
 A \code{data.table} with one row per MSstats field: \code{field}, \code{predicted},
@@ -15,5 +15,5 @@ A \code{data.table} with one row per MSstats field: \code{field}, \code{predicte
 \code{candidate_hit}, \code{confidence}, \code{has_candidates}, \code{n_candidates}.
 }
 \description{
-Score a trial against ground truth
+Score a trial against the gold standard
 }

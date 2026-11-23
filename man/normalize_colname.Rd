@@ -13,6 +13,6 @@ normalize_colname(x)
 Normalized character vector.
 }
 \description{
-Used for both raw data-frame headers and \link{GROUND_TRUTH} values so the LLM,
+Used for both raw data-frame headers and \link{GOLD_STANDARD} values so the LLM,
 the data, and the expected answers all speak the same dialect.
 }

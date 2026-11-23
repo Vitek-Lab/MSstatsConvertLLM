@@ -169,7 +169,7 @@ classify_filter <- function(column, tool) {
   
   if (column %in% good)    return("Correct")
   if (column %in% harmful) return("Harmful")
-  return("Novel")  # not in our ground truth — needs expert review
+  return("Novel")  # not in our gold standard — needs expert review
 }
 
 filters[, quality := mapply(classify_filter, column, tool)]

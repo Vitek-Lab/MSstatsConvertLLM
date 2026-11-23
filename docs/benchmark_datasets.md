@@ -92,6 +92,6 @@ identical pre-processing to both paths or the numbers are not comparable. Propos
 position: this is curation rather than format mapping and stays outside the LLM's
 remit. To be confirmed.
 
-**The reference scripts give the pipeline, not the column mapping.** Ground truth for
-mapping accuracy lives in the `clean_<Tool>` functions in MSstatsConvert's source,
+**The reference scripts give the pipeline, not the column mapping.** The gold standard
+for mapping accuracy lives in the `clean_<Tool>` functions in MSstatsConvert's source,
 which still need reading.

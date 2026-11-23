@@ -16,14 +16,14 @@ TOOL  <- "proteome_discoverer"
 N     <- 10
 
 ollama_unload <- function(model_key) {
-  request(paste0(OLLAMA_URL, "/api/generate")) |>
+  request(paste0(MSstatsConvertLLM:::.ollama_url(), "/api/generate")) |>
     req_body_json(list(model = MODEL_REGISTRY[[model_key]]$model, keep_alive = 0)) |>
     req_perform()
   Sys.sleep(2)
 }
 
 one_run <- function(acq) {
-  t <- run_trial(MODEL, TOOL, "constrained", acquisition = acq)
+  t <- run_benchmark_trial(MODEL, TOOL, "constrained", acquisition = acq)
   s <- score_trial(t)
   data.table(
     exact   = sum(s$exact_match),
