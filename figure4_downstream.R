@@ -35,8 +35,6 @@ panels <- list(
 )
 CAP   <- 20      # cap -log10(adjusted p) for display only; stated in the caption
 ALPHA <- 0.05
-NEAR  <- 0.20    # a disagreeing protein is "near the threshold" if the path that
-                 # missed it still has an adjusted p-value at or below this
 
 points <- list(); counts <- list()
 for (p in panels) {
@@ -67,13 +65,11 @@ for (p in panels) {
   n_tp  <- function(d) sum(d$sig & d$species == pos, na.rm = TRUE)
   n_fp  <- function(d) sum(d$sig & d$species == neg, na.rm = TRUE)
   disc  <- m[xor(sig_h %in% TRUE, sig_l %in% TRUE)]
-  # Near the threshold only when both paths gave an adjusted p-value
-  near  <- disc[!is.na(adjp_h) & !is.na(adjp_l) & pmax(adjp_h, adjp_l) <= NEAR]
   counts[[p$run]] <- data.table(
     panel = p$choice, data = p$data, run = p$run,
     conv_sig = n_sig(h), conv_true = n_tp(h), conv_false = n_fp(h),
     llm_sig  = n_sig(l), llm_true  = n_tp(l), llm_false  = n_fp(l),
-    disagree = nrow(disc), disagree_near = nrow(near))
+    disagree = nrow(disc))
 }
 
 d   <- rbindlist(points)
@@ -118,7 +114,7 @@ ggsave("results/Figure4_downstream.pdf", g, width = 6.5, height = 5.54)
 ggsave("results/Figure4_downstream.png", g, width = 6.5, height = 5.54, dpi = 200)
 
 cat("\n=== Figure 4 counts (paste these back) ===\n")
-print(ann[, .(run, conv_sig, conv_true, conv_false, llm_sig, llm_true, llm_false, disagree, disagree_near)])
-cat(sprintf("Display cap: -log10 adjusted p clipped at %d. Near threshold: missed path's adjusted p <= %.2f.\n", CAP, NEAR))
+print(ann[, .(run, conv_sig, conv_true, conv_false, llm_sig, llm_true, llm_false, disagree)])
+cat(sprintf("Display cap: -log10 adjusted p clipped at %d.\n", CAP))
 
 cat("\nFigure written to results/Figure4_downstream.pdf and .png\n")

@@ -106,31 +106,25 @@ the conversion specification. The saved table holds, for each choice, one row
 per protein and comparison that either converter reports, with the adjusted
 p-value from each converter and whether the protein was spiked, which is
 missing for a protein of mixed or unknown species. The counts below are the
-significant proteins, the spiked proteins among them, the proteins whose
-significance changed, and how many of those were near the threshold, i.e., the
-converter that did not call them gave an adjusted p-value of 0.2 or less. They
-are the counts reported in the manuscript. The vignettes "2. Case Study: LLM
-converter assigns different columns for intensity", "3. Case Study: LLM
-converter without filter-aware prompt leads to different results" and "4. Case
-Study: LLM converter selects a different column for peptide sequence, leading
-to marginally different results" walk through three of the six choices.
+significant proteins, the spiked proteins among them, and the proteins whose
+significance changed. They are the counts reported in the manuscript. The
+vignettes "2. Case Study: LLM converter assigns different columns for
+intensity", "3. Case Study: LLM converter without filter-aware prompt leads to
+different results" and "4. Case Study: LLM converter selects a different column
+for peptide sequence, leading to marginally different results" walk through
+three of the six choices.
 
 ```r
 panels <- readRDS("inst/extdata/downstream_panels.rds")
 ALPHA <- 0.05   # significance
 CAP   <- 20     # display cap on -log10 adjusted p
-NEAR  <- 0.20   # a disagreement is near the threshold below this adjusted p
 
-counts <- panels[, {
-  changed <- .SD[xor(sig_h %in% TRUE, sig_l %in% TRUE)]
-  .(hand        = sum(sig_h, na.rm = TRUE),
-    hand_spiked = sum(sig_h & spiked, na.rm = TRUE),
-    llm         = sum(sig_l, na.rm = TRUE),
-    llm_spiked  = sum(sig_l & spiked, na.rm = TRUE),
-    changed     = nrow(changed),
-    near        = nrow(changed[!is.na(adjp_h) & !is.na(adjp_l) &
-                                 pmax(adjp_h, adjp_l) <= NEAR]))
-}, by = .(panel, data)]
+counts <- panels[, .(hand        = sum(sig_h, na.rm = TRUE),
+                     hand_spiked = sum(sig_h & spiked, na.rm = TRUE),
+                     llm         = sum(sig_l, na.rm = TRUE),
+                     llm_spiked  = sum(sig_l & spiked, na.rm = TRUE),
+                     changed     = sum(xor(sig_h %in% TRUE, sig_l %in% TRUE))),
+                 by = .(panel, data)]
 
 counts
 ```
