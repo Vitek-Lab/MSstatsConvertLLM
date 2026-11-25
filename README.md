@@ -88,8 +88,11 @@ hallucinated columns, skipped filters) in `attr(result, "diagnostics")`.
 # Interactive single-trial test (edit the model/tool/prompt at the top)
 Rscript run_one.R
 
-# Full benchmark matrix (all models x tools x prompts x reps)
+# Full benchmark matrix (local models x tools x prompts x reps)
 Rscript run_all.R
+
+# Add the hosted model, which needs ANTHROPIC_API_KEY
+Rscript run_all.R --models llama3.2-3b,llama3.1-8b,deepseek-r1-14b,claude-sonnet
 
 # Run a subset
 Rscript run_all.R --models llama3.1-8b,deepseek-r1-14b --tools spectronaut --reps 1
@@ -97,6 +100,12 @@ Rscript run_all.R --models llama3.1-8b,deepseek-r1-14b --tools spectronaut --rep
 
 The runner scripts call `library(MSstatsConvertLLM)`, so install the package (or
 `devtools::load_all(".")`) before running them.
+
+`run_all.R` runs a hosted model only when `--models` names it, and then warns
+that the model's calls send the column names and the first three rows of each
+tool output to its provider. A trial whose model call fails, for example because
+no API key is set, is recorded as an error with its message in the scores CSV in
+`results/`, and is left out of the summary and the saved trials.
 
 ## Scoring
 
