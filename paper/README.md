@@ -217,9 +217,12 @@ for (model in names(MODEL_REGISTRY)) {
 ```
 
 `run_all.R` runs this loop and saves the trials in
-`results/raw_trials_benchmark_<date>_<time>.rds`. The differential abundance
-results come from six runs of the three comparison scripts, which take the
-conversion specifications from the trials named in `TRIALS_RDS`, and
+`results/raw_trials_benchmark_<date>_<time>.rds`. It runs the hosted model
+only when `--models` names it, as below, and records a trial whose model call
+failed as an error in `results/field_scores_benchmark_<date>_<time>.csv`
+instead of saving it with the trials. The differential abundance results come
+from six runs of the three comparison scripts, which take the conversion
+specifications from the trials named in `TRIALS_RDS`, and
 `inst/scripts/make_benchmark_data.R` copies these trials to `inst/extdata`,
 where the code above reads them, and reduces the output of the comparisons to
 the tables used above. Without `TRIALS_RDS`, the scripts use the trials of the
@@ -229,7 +232,8 @@ case-study vignettes read from these tables. The commands are run from the
 root of the repository.
 
 ```sh
-Rscript run_all.R --source benchmark
+Rscript run_all.R --source benchmark \
+  --models llama3.2-3b,llama3.1-8b,deepseek-r1-14b,claude-sonnet
 export TRIALS_RDS=$(ls -t results/raw_trials_benchmark_*.rds | head -n 1)
 
 LLM_MODEL=reference REF_SWAP=ProteinName=PG.ProteinNames Rscript compare_puyvelde2022.R
